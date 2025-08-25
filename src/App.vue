@@ -1,7 +1,7 @@
-<template>
+<template xmlns="http://www.w3.org/1999/html">
   <div class="geral">
     <el-container style="flex-direction: column; height: 100%">
-      <TopBar />
+      <topBar />
       <el-main class="main-content">
         <router-view />
       </el-main>
@@ -11,9 +11,10 @@
 
 <script>
 import TopBar from "@/components/TopBar.vue";
+import ListagemTimes from "@/components/ListagemTimes.vue";
 
 export default {
-  components: { TopBar }
+  components: { TopBar, ListagemTimes },
 };
 </script>
 
