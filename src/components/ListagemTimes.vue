@@ -7,13 +7,14 @@
         indicator-position="outside"
         arrow="always"
         class="carousel"
-        !loop
     >
       <el-carousel-item v-for="(team, index) in teams" :key="index" class="item-card">
         <div class="card">
-          <p>{{ team.description }}</p>
+          <h3 class="team-name">{{ team.teamName }}</h3>
+          <p class="team-description">{{ team.description }}</p>
         </div>
       </el-carousel-item>
+
     </el-carousel>
   </section>
 </template>
@@ -26,9 +27,8 @@ export default {
 
   data() {
     return {
-      URL_API: 'http://192.168.1.5:8080',
-      teams: [],
-
+      URL_API: 'http://localhost:8080',
+      teams: [{teamName: undefined, description: undefined}],
     };
   },
   methods: {
@@ -74,13 +74,32 @@ export default {
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
   color: #FFF;
   padding: 20px;
-  text-align: center;
   font-family: "Inter", sans-serif;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between; /* joga nome para cima/centro e descrição para baixo */
+  align-items: center;
+  text-align: center;
   transition: transform 0.3s ease;
 }
 .card:hover {
   transform: translateY(-3px);
 }
+
+.team-name {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-top: auto;   /* centraliza verticalmente */
+  margin-bottom: auto;
+}
+
+.team-description {
+  font-size: 0.9rem;
+  opacity: 0.85;
+  margin-bottom: 8px;
+  font-style: italic;
+}
+
 .item-card {
   background: transparent !important;
 }
@@ -98,6 +117,7 @@ export default {
   justify-content: center;
   margin-top: 12px;
 }
+
 
 .menu {
   border-bottom: none !important;

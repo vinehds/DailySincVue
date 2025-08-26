@@ -24,10 +24,10 @@ export default {
 
 <style scoped>
 .content-container {
-  height: 100vh;              /* ocupa a tela inteira */
+  height: 100vh;
   display: flex;
-  justify-content: center;    /* centraliza na horizontal */
-  align-items: center;        /* centraliza na vertical */
-  flex-direction: column;     /* garante que fiquem em coluna */
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
 }
 </style>

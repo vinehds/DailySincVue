@@ -25,8 +25,10 @@ html, body, #app {
   padding: 0;
 }
 
+
 body {
-  background: #313131; /* garante o fundo escuro */
+  overflow: hidden;
+  background: #313131;
 }
 </style>
 
