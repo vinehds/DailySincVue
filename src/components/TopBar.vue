@@ -38,7 +38,6 @@
   border-bottom: none !important;
   display: flex;
   justify-content: center;
-  font-family: "Inter", sans-serif;
   font-size: 15px;
   font-weight: 500;
 

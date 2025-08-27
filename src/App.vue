@@ -29,6 +29,10 @@ html, body, #app {
 body {
   overflow: hidden;
   background: #313131;
+
+  font-family: "Poppins", sans-serif;
+  font-size: 14px;
+  color: #333;
 }
 </style>
 
