@@ -17,45 +17,51 @@
       <el-main>
         <!-- FILTROS -->
         <div class="filters">
-          <div style="display: flex; gap: 30px" class="teste">
-            <el-date-picker
-                style="width: 200px; padding-left: 10px"
-                v-model="selectedDate"
-                type="date"
-                placeholder="Selecione a data"
-                class="rounded"
-                format="DD/MM/YYYY"
-            />
+          <el-form :inline="true" label-position="top" style="display: flex; gap: 30px">
 
-            <el-select
-                v-model="selectedValue"
-                placeholder="Devs"
-                class="modern-input"
-                style="width: 200px"
-                multiple
-                collapse-tags
-                clearable
-                @change="handleSelectChange"
-            >
-              <el-option label="Selecionar todos" value="all" />
-              <el-option
-                  v-for="item in options"
-                  :key="item.value"
-                  :label="item.label"
-                  :value="item.value"
+            <el-form-item label="Filtrar por Data">
+              <el-date-picker
+                  style="width: 200px; padding-left: 10px"
+                  v-model="selectedDate"
+                  type="date"
+                  placeholder="Selecione a data"
+                  class="rounded"
+                  format="DD/MM/YYYY"
+                  @change="buscarDados"
               />
-            </el-select>
-          </div>
+            </el-form-item>
 
-          <el-button
-              type="primary"
-              class="rounded"
-              @click="buscarDados"
-              style="margin-right: 20px"
-          >
-            Gerar resumo
-          </el-button>
+            <el-form-item label="Filtrar por Dev">
+              <el-select
+                  v-model="selectedValue"
+                  placeholder="Devs"
+                  class="modern-input"
+                  style="width: 200px"
+                  multiple
+                  collapse-tags
+                  clearable
+                  @change="handleSelectChange"
+              >
+                <el-option label="Todos" value="all" />
+                <el-option
+                    v-for="item in options"
+                    :key="item.value"
+                    :label="item.label"
+                    :value="item.value"
+                />
+              </el-select>
+            </el-form-item>
+            <el-button
+                type="primary"
+                class="rounded"
+                @click="buscarDados"
+                style="margin-top: 22px; margin-right: 20px"
+            >
+              Gerar resumo
+            </el-button>
+          </el-form>
         </div>
+
 
         <!-- LISTA DE DAILYS -->
         <div class="card-container">
@@ -88,7 +94,7 @@
                   circle
                   @click="prevDaily"
                   :disabled="currentIndex === 0"
-              />
+              ><</el-button>
               <span class="dialog-title">
                 Autor {{ dailys[currentIndex]?.authorId }} -
                 {{ dailys[currentIndex]?.date }}
@@ -98,7 +104,7 @@
                   circle
                   @click="nextDaily"
                   :disabled="currentIndex === dailys.length - 1"
-              />
+              >></el-button>
             </div>
           </template>
 
@@ -131,15 +137,12 @@ export default {
         { value: "2", label: "Dev 2" },
         { value: "3", label: "Dev 3" },
       ],
-      dailys: [], // vem da API agora
+      dailys: [],
+      dailiesFiltered: [],
       showModal: false,
       currentIndex: 0,
 
-      menuItems: [
-        { id: "dashboard", teamName: "Dashboard" },
-        { id: "relatorios", teamName: "Relatórios" },
-        { id: "config", teamName: "Configurações" },
-      ],
+      menuItems: [],
 
       selectedMenu: "dashboard",
     };
@@ -156,6 +159,8 @@ export default {
       if (val.includes("all")) {
         this.selectedValue = this.options.map((o) => o.value);
       }
+
+
     },
     openDaily(index) {
       this.currentIndex = index;
@@ -188,9 +193,9 @@ export default {
       try {
         const formattedDate = this.formatDateToDDMMYYYY(new Date(date));
         const resp = await axios.get(
-            `${this.URL_API}/dailies?date=${formattedDate}`
+            `${this.URL_API}/dailies/byDate?date=${formattedDate}`
         );
-        this.dailys = resp.data; // já substitui os mockados
+        this.dailys = resp.data;
       } catch (error) {
         console.error("Erro ao buscar dailys:", error);
       }
@@ -202,6 +207,14 @@ export default {
       const year = date.getFullYear();
       return `${day}/${month}/${year}`;
     },
+
+    devFilter(){
+      this.dailiesFiltered = this.dailys.filter(daily => {
+        //authorId tem que ser igual ao id do dev selecionado
+
+        //implementar busca aos devs
+      })
+    }
   },
   mounted() {
     this.getTeams();
@@ -212,6 +225,7 @@ export default {
 
 
 <style scoped>
+
 :root {
   font-family: "Poppins", sans-serif;
 }
@@ -220,6 +234,7 @@ export default {
 }
 
 .main-layout {
+  margin-top: 2%;
   display: flex;
   min-height: 100vh;
   background: inherit;
@@ -234,7 +249,7 @@ export default {
   margin: 12px;
   border-radius: 20px;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2);
-  height: 450px;
+  height: 490px;
 }
 .sidebar ul {
   list-style: none;
@@ -284,7 +299,7 @@ export default {
   border-radius: 20px;
   padding: 16px;
   width: 100%;
-  margin-top: 30px;
+  margin-top: 15px;
   max-width: 850px;
   height: 370px;
   box-shadow: 0 6px 16px rgba(0,0,0,0.2);

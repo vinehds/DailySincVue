@@ -23,7 +23,12 @@ export default {
 </script>
 
 <style scoped>
+body{
+  overflow-x: hidden;
+}
+
 .content-container {
+  margin-top: 10%;
   height: 100vh;
   display: flex;
   justify-content: center;
