@@ -5,16 +5,17 @@
         <li
             v-for="(item, index) in menuItems"
             :key="index"
-            :class="{ active: selectedMenu === item.value }"
-            @click="selectMenu(item.value)"
+            :class="{ active: selectedMenu === item.id }"
+            @click="selectMenu(item.id)"
         >
-          {{ item.label }}
+          {{ item.teamName }}
         </li>
       </ul>
     </aside>
 
     <el-container class="content-container">
       <el-main>
+        <!-- FILTROS -->
         <div class="filters">
           <div style="display: flex; gap: 30px" class="teste">
             <el-date-picker
@@ -56,23 +57,24 @@
           </el-button>
         </div>
 
-        <!-- CARD CONTAINER -->
+        <!-- LISTA DE DAILYS -->
         <div class="card-container">
           <div class="card-scroll">
             <div
                 v-for="(daily, index) in dailys"
-                :key="index"
+                :key="daily.id"
                 class="daily-item"
                 @click="openDaily(index)"
             >
-              <div class="author">{{ daily.author }}</div>
-              <div class="text">{{ daily.text }}</div>
-              <div class="time">{{ daily.time }}</div>
+              <div class="author">Autor ID: {{ daily.authorId }}</div>
+              <div class="text"><b>Ontem:</b> {{ daily.lastDayLog }}</div>
+              <div class="text"><b>Hoje:</b> {{ daily.nextDayPlan }}</div>
+              <div class="time">{{ daily.date }}</div>
             </div>
           </div>
         </div>
 
-        <!-- MODAL PARA EXPANSÃO -->
+        <!-- MODAL -->
         <el-dialog
             v-model="showModal"
             width="600px"
@@ -88,7 +90,8 @@
                   :disabled="currentIndex === 0"
               />
               <span class="dialog-title">
-                {{ dailys[currentIndex]?.author }} - {{ dailys[currentIndex]?.time }}
+                Autor {{ dailys[currentIndex]?.authorId }} -
+                {{ dailys[currentIndex]?.date }}
               </span>
               <el-button
                   icon="ArrowRight"
@@ -100,7 +103,8 @@
           </template>
 
           <div class="dialog-content">
-            <p>{{ dailys[currentIndex]?.text }}</p>
+            <p><b>Ontem:</b> {{ dailys[currentIndex]?.lastDayLog }}</p>
+            <p><b>Hoje:</b> {{ dailys[currentIndex]?.nextDayPlan }}</p>
           </div>
 
           <template #footer>
@@ -113,9 +117,13 @@
 </template>
 
 <script>
+import axios from "axios";
+
 export default {
   data() {
     return {
+      URL_API: "http://localhost:8080",
+
       selectedDate: null,
       selectedValue: [],
       options: [
@@ -123,31 +131,26 @@ export default {
         { value: "2", label: "Dev 2" },
         { value: "3", label: "Dev 3" },
       ],
-      dailys: [
-        { author: "Dev 1", text: "Ontem finalizei a feature X", time: "09:15" },
-        { author: "Dev 2", text: "Hoje vou focar em bug Y", time: "09:17" },
-        { author: "Dev 3", text: "Estou bloqueado no serviço Z", time: "09:20" },
-        { author: "Dev 4", text: "Testando integração com API", time: "09:25" },
-      ],
+      dailys: [], // vem da API agora
       showModal: false,
       currentIndex: 0,
 
       menuItems: [
-        { value: "dashboard", label: "Dashboard" },
-        { value: "relatorios", label: "Relatórios" },
-        { value: "config", label: "Configurações" },
+        { id: "dashboard", teamName: "Dashboard" },
+        { id: "relatorios", teamName: "Relatórios" },
+        { id: "config", teamName: "Configurações" },
       ],
-      selectedMenu: "dashboard", // item inicial
+
+      selectedMenu: "dashboard",
     };
   },
   methods: {
     buscarDados() {
-      console.log(
-          "Data:",
-          this.selectedDate,
-          "Valor(es):",
-          this.selectedValue
-      );
+      if (!this.selectedDate) {
+        this.$message.warning("Selecione uma data primeiro!");
+        return;
+      }
+      this.getDailys(this.selectedDate);
     },
     handleSelectChange(val) {
       if (val.includes("all")) {
@@ -170,11 +173,43 @@ export default {
     },
     selectMenu(value) {
       this.selectedMenu = value;
-      console.log("Selecionado:", value);
     },
+
+    async getTeams() {
+      try {
+        const response = await axios.get(this.URL_API.concat("/teams"));
+        this.menuItems = response.data;
+      } catch (error) {
+        console.error("Erro ao buscar teams:", error);
+      }
+    },
+
+    async getDailys(date) {
+      try {
+        const formattedDate = this.formatDateToDDMMYYYY(new Date(date));
+        const resp = await axios.get(
+            `${this.URL_API}/dailies?date=${formattedDate}`
+        );
+        this.dailys = resp.data; // já substitui os mockados
+      } catch (error) {
+        console.error("Erro ao buscar dailys:", error);
+      }
+    },
+
+    formatDateToDDMMYYYY(date) {
+      const day = String(date.getDate()).padStart(2, "0");
+      const month = String(date.getMonth() + 1).padStart(2, "0");
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
+    },
+  },
+  mounted() {
+    this.getTeams();
+    this.getDailys(new Date());
   },
 };
 </script>
+
 
 <style scoped>
 :root {
@@ -246,23 +281,22 @@ export default {
 
 .card-container {
   background: #fff;
-  border-radius: 20px;  /* mantém o arredondamento */
+  border-radius: 20px;
   padding: 16px;
   width: 100%;
   margin-top: 30px;
   max-width: 850px;
-  height: 370px;        /* altura fixa */
+  height: 370px;
   box-shadow: 0 6px 16px rgba(0,0,0,0.2);
   display: flex;
   flex-direction: column;
-  overflow: hidden;     /* importante: esconde o scroll que sai da borda */
+  overflow: hidden;
 }
 
-/* container interno com scroll */
 .card-scroll {
   overflow-y: auto;
-  flex: 1;              /* ocupa todo o espaço do card-container */
-  padding-right: 8px;   /* espaço pro scroll não colar na borda */
+  flex: 1;
+  padding-right: 8px;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -275,7 +309,6 @@ export default {
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   cursor: pointer;
 }
-
 
 .message {
   background: #f7f7f7;
@@ -312,7 +345,6 @@ export default {
   color: white;
 }
 
-/* Dialog */
 .daily-dialog .dialog-header {
   display: flex;
   justify-content: space-between;
