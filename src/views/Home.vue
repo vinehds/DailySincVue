@@ -3,9 +3,9 @@
     <aside class="sidebar">
       <ul>
         <li
-            v-for="(item, index) in menuItems"
+            v-for="(item, index) in teamsItens"
             :key="index"
-            :class="{ active: selectedMenu === item.id }"
+            :class="{ active: teamSelected === item.id }"
             @click="selectMenu(item.id)"
         >
           {{ item.teamName }}
@@ -33,7 +33,7 @@
 
             <el-form-item label="Filtrar por Dev">
               <el-select
-                  v-model="selectedValue"
+                  v-model="devsSelected"
                   placeholder="Devs"
                   class="modern-input"
                   style="width: 200px"
@@ -44,10 +44,10 @@
               >
                 <el-option label="Todos" value="all" />
                 <el-option
-                    v-for="item in options"
-                    :key="item.value"
-                    :label="item.label"
-                    :value="item.value"
+                    v-for="item in devsFiltered"
+                    :key="item.id"
+                    :label="item.name"
+                    :value="item.id"
                 />
               </el-select>
             </el-form-item>
@@ -62,12 +62,10 @@
           </el-form>
         </div>
 
-
-        <!-- LISTA DE DAILYS -->
         <div class="card-container">
           <div class="card-scroll">
             <div
-                v-for="(daily, index) in dailys"
+                v-for="(daily, index) in dailiesFiltered"
                 :key="daily.id"
                 class="daily-item"
                 @click="openDaily(index)"
@@ -131,20 +129,16 @@ export default {
       URL_API: "http://localhost:8080",
 
       selectedDate: null,
-      selectedValue: [],
-      options: [
-        { value: "1", label: "Dev 1" },
-        { value: "2", label: "Dev 2" },
-        { value: "3", label: "Dev 3" },
-      ],
+      devsSelected: [],
       dailys: [],
+      devs: [],
+      devsFiltered: [],
       dailiesFiltered: [],
       showModal: false,
       currentIndex: 0,
+      teamsItens: [],
 
-      menuItems: [],
-
-      selectedMenu: "dashboard",
+      teamSelected: "dashboard",
     };
   },
   methods: {
@@ -157,9 +151,11 @@ export default {
     },
     handleSelectChange(val) {
       if (val.includes("all")) {
-        this.selectedValue = this.options.map((o) => o.value);
+        this.devsSelected = this.devs.map((o) => o.value);
+        this.dailiesFiltered = this.dailys;
+        return;
       }
-
+      this.dailyFilter(this.devsSelected);
 
     },
     openDaily(index) {
@@ -177,13 +173,30 @@ export default {
       }
     },
     selectMenu(value) {
-      this.selectedMenu = value;
+      this.teamSelected = value;
+      this.devsFilter(value);
+    },
+
+    devsFilter(value){
+      this.devsFiltered = this.devs.filter(dev => dev.teamId === value);
     },
 
     async getTeams() {
       try {
         const response = await axios.get(this.URL_API.concat("/teams"));
-        this.menuItems = response.data;
+        this.teamsItens = response.data;
+        this.selectMenu(this.teamsItens[0].id);
+      } catch (error) {
+        console.error("Erro ao buscar teams:", error);
+      }
+    },
+
+    async getDevs() {
+      try {
+        const response = await axios.get(this.URL_API.concat("/developers"));
+        this.devs = response.data;
+        this.devsFiltered = this.devs;
+        this.handleSelectChange('all');
       } catch (error) {
         console.error("Erro ao buscar teams:", error);
       }
@@ -208,16 +221,13 @@ export default {
       return `${day}/${month}/${year}`;
     },
 
-    devFilter(){
-      this.dailiesFiltered = this.dailys.filter(daily => {
-        //authorId tem que ser igual ao id do dev selecionado
-
-        //implementar busca aos devs
-      })
-    }
+    dailyFilter(ids){
+      this.dailiesFiltered = this.dailys.filter(daily => ids.includes(daily.id))
+    },
   },
   mounted() {
     this.getTeams();
+    this.getDevs();
     this.getDailys(new Date());
   },
 };
