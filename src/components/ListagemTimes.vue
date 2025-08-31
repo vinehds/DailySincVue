@@ -8,52 +8,188 @@
         arrow="always"
         class="carousel"
     >
-      <el-carousel-item v-for="(team, index) in teams" :key="index" class="item-card">
-        <div class="card">
+      <!-- Renderiza os times -->
+      <el-carousel-item
+          v-for="(team, index) in teams"
+          :key="index"
+          class="item-card"
+      >
+        <div class="card" @click="openEditModal(team)">
           <h3 class="team-name">{{ team.teamName }}</h3>
           <p class="team-description">{{ team.description }}</p>
         </div>
       </el-carousel-item>
-
     </el-carousel>
+
+    <!-- Mensagem caso não haja times -->
+    <div v-if="teams.length === 0" class="no-teams-msg">
+      Nenhum time cadastrado.
+    </div>
+
+    <!-- Botão adicionar time abaixo do carrossel -->
+    <div class="add-team-container">
+      <el-button
+          class="add-team-button"
+          @click="openAddModal"
+      >
+        + Adicionar Time
+      </el-button>
+    </div>
+
+    <!-- Modal de edição/criação -->
+    <el-dialog
+        v-model="editDialogVisible"
+        :title="isAdding ? 'Adicionar Time' : 'Editar Time'"
+        width="500px"
+    >
+      <el-form :model="editForm" label-width="120px">
+        <el-form-item label="Nome do Time">
+          <el-input v-model="editForm.teamName" />
+        </el-form-item>
+
+        <el-form-item label="Descrição">
+          <el-input type="textarea" v-model="editForm.description" />
+        </el-form-item>
+
+        <el-form-item label="Membros">
+          <el-select
+              v-model="editForm.membersId"
+              multiple
+              placeholder="Selecione os membros"
+              style="width: 100%"
+          >
+            <el-option
+                v-for="member in allMembers"
+                :key="member.id"
+                :label="member.name"
+                :value="member.id"
+            />
+          </el-select>
+        </el-form-item>
+      </el-form>
+
+      <template #footer>
+        <el-button @click="editDialogVisible = false">Cancelar</el-button>
+        <el-button type="primary" @click="saveEdit">
+          {{ isAdding ? 'Adicionar' : 'Salvar' }}
+        </el-button>
+      </template>
+    </el-dialog>
   </section>
 </template>
 
 <script>
-
 import axios from "axios";
 
 export default {
 
   data() {
     return {
-      URL_API: 'http://localhost:8080',
-      teams: [{teamName: undefined, description: undefined}],
+      URL_API: "http://192.168.1.8:8080",
+      teams: [],
+      allMembers: [],
+      editDialogVisible: false,
+      isAdding: false,
+      editForm: {
+        id: null,
+        teamName: "",
+        description: "",
+        membersId: []
+      }
     };
   },
   methods: {
-
-    async getTeams(){
+    async getTeams() {
       try {
-        const response = await axios.get(this.URL_API.concat("/teams"));
-
-        console.log(response);
-
-        this.teams = response.data;
+        const response = await axios.get(`${this.URL_API}/teams`);
+        this.teams = response.data || [];
       } catch (error) {
-        console.error("Erro ao buscar dados do backend:", error);
+        console.error("Erro ao buscar times:", error);
+        this.teams = [];
+      }
+    },
+
+    async getMembers() {
+      try {
+        const response = await axios.get(`${this.URL_API}/developers`);
+        this.allMembers = response.data || [];
+      } catch (error) {
+        console.error("Erro ao buscar membros:", error);
+      }
+    },
+
+    openEditModal(team) {
+      this.isAdding = false;
+      this.editForm = { ...team };
+      this.editDialogVisible = true;
+    },
+
+    openAddModal() {
+      this.isAdding = true;
+      this.editForm = { id: null, teamName: "", description: "", membersId: [] };
+      this.editDialogVisible = true;
+    },
+
+    async saveEdit() {
+      try {
+        if (this.isAdding) {
+          await axios.post(`${this.URL_API}/teams`, this.editForm);
+          this.$message.success("Time adicionado com sucesso!");
+        } else {
+          await axios.put(`${this.URL_API}/teams/${this.editForm.id}`, this.editForm);
+          this.$message.success("Time atualizado com sucesso!");
+        }
+        this.editDialogVisible = false;
+        await this.getTeams();
+      } catch (error) {
+        console.error("Erro ao salvar:", error);
+        this.$message.error("Erro ao salvar time");
       }
     }
-
   },
   mounted() {
     this.getTeams();
+    this.getMembers();
   }
 };
-
 </script>
 
+
 <style scoped>
+
+.member-actions el-button {
+  margin-left: 5px;
+}
+
+
+
+/* Mantém estilos dos cards e botão adicionar Time */
+.add-team-container {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+}
+
+.add-team-button {
+  width: 150px;
+  height: 60px;
+  border-radius: 18px;
+  font-weight: bold;
+  background: #294f5b;
+  color: #FFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+}
+
+.add-team-button:hover {
+  cursor: pointer;
+  color: #FFF;
+  transform: translateY(-3px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.35);
+  background-color: #294f5b;
+}
 
 .carousel{
   background-color: #b7111100;
@@ -77,7 +213,7 @@ export default {
   font-family: "Inter", sans-serif;
   display: flex;
   flex-direction: column;
-  justify-content: space-between; /* joga nome para cima/centro e descrição para baixo */
+  justify-content: space-between;
   align-items: center;
   text-align: center;
   transition: transform 0.3s ease;

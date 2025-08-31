@@ -1,132 +1,129 @@
 <template>
-  <div class="main-layout">
-    <aside class="sidebar">
-      <ul>
-        <li
-            v-for="(item, index) in teamsItens"
-            :key="index"
-            :class="{ active: teamSelected === item.id }"
-            @click="selectMenu(item.id)"
-        >
-          {{ item.teamName }}
-        </li>
-      </ul>
-    </aside>
+  <el-container class="container">
+    <div class="main-layout">
+      <aside class="sidebar">
+        <ul>
+          <li v-for="(item, index) in teamsItens" :key="index" :class="{ active: teamSelected === item.id }"
+              @click="selectMenu(item.id)">
+            {{ item.teamName }}
+          </li>
+        </ul>
+      </aside>
 
-    <el-container class="content-container">
-      <el-main>
-        <!-- FILTROS -->
-        <div class="filters">
-          <el-form :inline="true" label-position="top" style="display: flex; gap: 30px">
+      <el-container class="content-container">
 
-            <el-form-item label="Filtrar por Data">
-              <el-date-picker
-                  style="width: 200px; padding-left: 10px"
-                  v-model="selectedDate"
-                  type="date"
-                  placeholder="Selecione a data"
-                  class="rounded"
-                  format="DD/MM/YYYY"
-                  @change="buscarDados"
+        <el-main>
+          <div class="filters">
+            <div>
+              <el-form :inline="true" label-position="top" style="display: flex; gap: 30px">
+
+                <el-form-item label="Filtrar por Data">
+                  <el-date-picker style="width: 200px; padding-left: 10px" v-model="selectedDate" type="date"
+                                  placeholder="Selecione a data" class="rounded" format="DD/MM/YYYY" @change="buscarDados"/>
+                </el-form-item>
+
+                <el-form-item label="Filtrar por Dev">
+                  <el-select v-model="devsSelected" placeholder="Devs" class="modern-input" style="width: 200px" multiple
+                             collapse-tags clearable @change="handleSelectChange">
+
+                    <el-option label="Todos" value="all" />
+
+                    <el-option v-for="item in devsFiltered" :key="item.id" :label="item.name" :value="item.id"/>
+
+                  </el-select>
+                </el-form-item>
+              </el-form>
+            </div>
+
+              <el-button type="primary" class="rounded" @click="abrirResumo" style="margin-top: 30px; margin-right: 20px">
+                Gerar resumo
+              </el-button>
+
+
+          </div>
+
+          <div class="card-container">
+            <div class="card-scroll">
+
+              <div v-for="(daily, index) in dailiesFiltered" :key="daily.id" class="daily-item" @click="openDaily(index)">
+                <div class="author">Autor ID: {{ daily.authorId }}</div>
+                <div class="text"><b>Ontem:</b> {{ daily.lastDayLog }}</div>
+                <div class="text"><b>Hoje:</b> {{ daily.nextDayPlan }}</div>
+                <div class="time">{{ daily.date }}</div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Modal de Resumo -->
+          <el-dialog v-model="showResumo" width="700px" class="resumo-dialog">
+            <template #header>
+              <div class="dialog-header">
+                <span class="dialog-title">Resumo das Dailies</span>
+                <el-button size="small" type="success" @click="copiarResumo">📋 Copiar</el-button>
+              </div>
+            </template>
+
+            <div class="resumo-content">
+              <pre>{{ resumoTexto }}</pre>
+            </div>
+
+            <template #footer>
+              <el-button type="primary" @click="showResumo = false">Fechar</el-button>
+            </template>
+          </el-dialog>
+
+          <el-dialog v-model="showModal" width="600px" :show-close="false" class="daily-dialog">
+
+            <template #header>
+              <div class="dialog-header">
+                <el-button icon="ArrowLeft" circle @click="prevDaily" :disabled="currentIndex === 0"><</el-button>
+                <span class="dialog-title">
+                Autor {{ dailiesFiltered[currentIndex]?.authorId }} -
+                {{ dailiesFiltered[currentIndex]?.date }}
+                </span>
+                <el-button icon="ArrowRight"
+                    circle
+                    @click="nextDaily"
+                    :disabled="currentIndex === dailiesFiltered.length - 1"
+                >></el-button>
+              </div>
+            </template>
+
+            <div class="dialog-content">
+              <p><b>Ontem:</b> {{ dailiesFiltered[currentIndex]?.lastDayLog }}</p>
+              <p><b>Hoje:</b> {{ dailiesFiltered[currentIndex]?.nextDayPlan }}</p>
+
+              <el-input
+                  v-model="dailyResponse"
+                  type="textarea"
+                  placeholder="Escreva sua resposta..."
+                  rows="3"
+                  class="mt-3"
               />
-            </el-form-item>
 
-            <el-form-item label="Filtrar por Dev">
-              <el-select
-                  v-model="devsSelected"
-                  placeholder="Devs"
-                  class="modern-input"
-                  style="width: 200px"
-                  multiple
-                  collapse-tags
-                  clearable
-                  @change="handleSelectChange"
-              >
-                <el-option label="Todos" value="all" />
-                <el-option
-                    v-for="item in devsFiltered"
-                    :key="item.id"
-                    :label="item.name"
-                    :value="item.id"
-                />
-              </el-select>
-            </el-form-item>
-            <el-button
-                type="primary"
-                class="rounded"
-                @click="buscarDados"
-                style="margin-top: 22px; margin-right: 20px"
-            >
-              Gerar resumo
-            </el-button>
-          </el-form>
-        </div>
-
-        <div class="card-container">
-          <div class="card-scroll">
-            <div
-                v-for="(daily, index) in dailiesFiltered"
-                :key="daily.id"
-                class="daily-item"
-                @click="openDaily(index)"
-            >
-              <div class="author">Autor ID: {{ daily.authorId }}</div>
-              <div class="text"><b>Ontem:</b> {{ daily.lastDayLog }}</div>
-              <div class="text"><b>Hoje:</b> {{ daily.nextDayPlan }}</div>
-              <div class="time">{{ daily.date }}</div>
             </div>
-          </div>
-        </div>
 
-        <!-- MODAL -->
-        <el-dialog
-            v-model="showModal"
-            width="600px"
-            :show-close="false"
-            class="daily-dialog"
-        >
-          <template #header>
-            <div class="dialog-header">
-              <el-button
-                  icon="ArrowLeft"
-                  circle
-                  @click="prevDaily"
-                  :disabled="currentIndex === 0"
-              ><</el-button>
-              <span class="dialog-title">
-                Autor {{ dailys[currentIndex]?.authorId }} -
-                {{ dailys[currentIndex]?.date }}
-              </span>
-              <el-button
-                  icon="ArrowRight"
-                  circle
-                  @click="nextDaily"
-                  :disabled="currentIndex === dailys.length - 1"
-              >></el-button>
-            </div>
-          </template>
-
-          <div class="dialog-content">
-            <p><b>Ontem:</b> {{ dailys[currentIndex]?.lastDayLog }}</p>
-            <p><b>Hoje:</b> {{ dailys[currentIndex]?.nextDayPlan }}</p>
-          </div>
-
-          <template #footer>
-            <el-button type="danger" @click="showModal = false">Fechar</el-button>
-          </template>
-        </el-dialog>
-      </el-main>
-    </el-container>
-  </div>
+            <template #footer>
+              <el-button type="danger" @click="showModal = false">Fechar</el-button>
+              <el-button type="primary" @click="enviarResposta">Enviar resposta</el-button>
+            </template>
+          </el-dialog>
+        </el-main>
+      </el-container>
+    </div>
+  </el-container>
 </template>
 
 <script>
 import axios from "axios";
+import DeveloperSidebar from "@/components/DeveloperSidebar.vue";
 
 export default {
+  components: {DeveloperSidebar},
   data() {
     return {
-      URL_API: "http://localhost:8080",
+      URL_API: "http://192.168.1.8:8080",
 
       selectedDate: null,
       devsSelected: [],
@@ -138,10 +135,30 @@ export default {
       currentIndex: 0,
       teamsItens: [],
 
+      showResumo: false,
+      resumoTexto: "",
+
+      dailyResponse: "",
+
       teamSelected: "dashboard",
     };
   },
   methods: {
+    async enviarResposta() {
+      const currentDaily = this.dailys[this.currentIndex];
+      if (!currentDaily) return;
+
+      try {
+
+        this.$message.success("Resposta enviada com sucesso!");
+        this.dailyResponse = "";
+        this.showDialog = false;
+      } catch (error) {
+        console.error("Erro ao enviar resposta:", error);
+        this.$message.error("Erro ao enviar resposta");
+      }
+    },
+
     buscarDados() {
       if (!this.selectedDate) {
         this.$message.warning("Selecione uma data primeiro!");
@@ -150,13 +167,14 @@ export default {
       this.getDailys(this.selectedDate);
     },
     handleSelectChange(val) {
+
       if (val.includes("all")) {
-        this.devsSelected = this.devs.map((o) => o.value);
-        this.dailiesFiltered = this.dailys;
+        this.devsSelected = this.devsFiltered.map(d => d.id);
+        this.dailyFilter(this.devsSelected);
         return;
       }
-      this.dailyFilter(this.devsSelected);
 
+      this.dailyFilter(this.devsSelected);
     },
     openDaily(index) {
       this.currentIndex = index;
@@ -174,32 +192,15 @@ export default {
     },
     selectMenu(value) {
       this.teamSelected = value;
+
+      // 1 - Atualiza lista de devs filtrados
       this.devsFilter(value);
-    },
 
-    devsFilter(value){
-      this.devsFiltered = this.devs.filter(dev => dev.teamId === value);
-    },
+      // 2 - Seleciona automaticamente todos os devs desse time
+      this.devsSelected = this.devsFiltered.map(d => d.id);
 
-    async getTeams() {
-      try {
-        const response = await axios.get(this.URL_API.concat("/teams"));
-        this.teamsItens = response.data;
-        this.selectMenu(this.teamsItens[0].id);
-      } catch (error) {
-        console.error("Erro ao buscar teams:", error);
-      }
-    },
-
-    async getDevs() {
-      try {
-        const response = await axios.get(this.URL_API.concat("/developers"));
-        this.devs = response.data;
-        this.devsFiltered = this.devs;
-        this.handleSelectChange('all');
-      } catch (error) {
-        console.error("Erro ao buscar teams:", error);
-      }
+      // 3 - Atualiza filtro das dailies
+      this.dailyFilter(this.devsSelected);
     },
 
     async getDailys(date) {
@@ -209,6 +210,7 @@ export default {
             `${this.URL_API}/dailies/byDate?date=${formattedDate}`
         );
         this.dailys = resp.data;
+        this.dailyFilter(this.devsSelected);
       } catch (error) {
         console.error("Erro ao buscar dailys:", error);
       }
@@ -221,14 +223,81 @@ export default {
       return `${day}/${month}/${year}`;
     },
 
-    dailyFilter(ids){
-      this.dailiesFiltered = this.dailys.filter(daily => ids.includes(daily.id))
+
+    async initPage() {
+      try {
+        // 1 - Buscar times
+        const teamsResp = await axios.get(this.URL_API.concat("/teams"));
+        this.teamsItens = teamsResp.data;
+
+        if (this.teamsItens.length === 0) return;
+
+        // 2 - Selecionar o primeiro time
+        const firstTeamId = this.teamsItens[0].id;
+        this.teamSelected = firstTeamId;
+
+        // 3 - Buscar devs
+        const devsResp = await axios.get(this.URL_API.concat("/developers"));
+        this.devs = devsResp.data;
+
+        // 4 - Filtrar devs do time selecionado
+        this.devsFilter(firstTeamId);
+
+        // 5 - Selecionar todos os devs filtrados
+        this.devsSelected = this.devsFiltered.map(d => d.id);
+
+        // 6 - Buscar dailies da data atual
+        const today = new Date();
+        const formattedDate = this.formatDateToDDMMYYYY(today);
+        const dailiesResp = await axios.get(
+            `${this.URL_API}/dailies/byDate?date=${formattedDate}`
+        );
+        this.dailys = dailiesResp.data;
+
+        // 7 - Filtrar dailies pelos devs selecionados
+        this.dailyFilter(this.devsSelected);
+      } catch (error) {
+        console.error("Erro no init:", error);
+      }
+    },
+
+    devsFilter(teamId) {
+      this.devsFiltered = this.devs.filter(dev => dev.teamId === teamId);
+    },
+
+    dailyFilter(ids) {
+      this.dailiesFiltered = this.dailys.filter(daily =>
+          ids.includes(daily.authorId) // <- importante: daily tem authorId, não id do daily
+      );
+    },
+
+    abrirResumo() {
+      if (!this.dailiesFiltered.length) {
+        this.$message.warning("Nenhuma daily encontrada para gerar o resumo!");
+        return;
+      }
+
+      // Monta o texto do resumo
+      this.resumoTexto = this.dailiesFiltered.map(d => {
+        const dev = this.devs.find(x => x.id === d.authorId);
+        return `👤 ${dev ? dev.name : "Desconhecido"} (${d.date})\n- Ontem: ${d.lastDayLog}\n- Hoje: ${d.nextDayPlan}\n`;
+      }).join("\n");
+
+      this.showResumo = true;
+    },
+
+    async copiarResumo() {
+      try {
+        await navigator.clipboard.writeText(this.resumoTexto);
+        this.$message.success("Resumo copiado para a área de transferência!");
+      } catch (err) {
+        console.error("Erro ao copiar:", err);
+        this.$message.error("Falha ao copiar resumo!");
+      }
     },
   },
   mounted() {
-    this.getTeams();
-    this.getDevs();
-    this.getDailys(new Date());
+    this.initPage();
   },
 };
 </script>
@@ -236,37 +305,69 @@ export default {
 
 <style scoped>
 
-:root {
-  font-family: "Poppins", sans-serif;
+
+.resumo-dialog .dialog-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
-* {
-  font-family: inherit !important;
+
+.resumo-content {
+  background: #f9f9f9;
+  padding: 15px;
+  border-radius: 12px;
+  max-height: 60vh;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  font-family: "Courier New", monospace;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  scrollbar-width: none;
+}
+
+.container {
+  width: 100%;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+}
+
+.content-container {
+  flex: 1;
+  padding: 2%;
+  display: flex;
+  flex-direction: column;
 }
 
 .main-layout {
-  margin-top: 2%;
+  margin-top: 1%;
   display: flex;
-  min-height: 100vh;
+  min-height: 90vh;
   background: inherit;
-  padding: 40px;
+  padding: 2%;
+  width: 100%;
+  justify-content: center;
 }
 
 .sidebar {
-  width: 200px;
+  width: 15%;
   background: linear-gradient(180deg, #2c5364, #203a43, #0f2027);
   color: white;
-  padding: 20px;
-  margin: 12px;
+  padding: 2%;
+  margin: 1%;
   border-radius: 20px;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2);
-  height: 490px;
+  height: 83%;
 }
 .sidebar ul {
   list-style: none;
   padding: 0;
 }
 .sidebar li {
-  padding: 10px 12px;
+  padding: 5% 8%;
   border-radius: 12px;
   cursor: pointer;
   transition: background 0.3s, transform 0.2s;
@@ -279,39 +380,21 @@ export default {
   font-weight: bold;
   transform: scale(1.03);
 }
-.filters{
+
+.filters {
   display: flex;
   justify-content: space-between;
-}
-.sidebar ul {
-  list-style: none;
-  padding: 0;
-}
-.sidebar li {
-  padding: 10px 12px;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: background 0.3s;
-}
-.sidebar li:hover {
-  background: rgba(255, 255, 255, 0.15);
-}
-
-.content-container {
-  flex: 1;
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
+  max-width: 95%; /* evita estourar muito em telas grandes */
 }
 
 .card-container {
   background: #fff;
   border-radius: 20px;
-  padding: 16px;
-  width: 100%;
-  margin-top: 15px;
-  max-width: 850px;
-  height: 370px;
+  padding: 2%;
+  width: 95%; /* agora responsivo */
+  margin-top: 1%;
+  max-width: 90%; /* evita estourar muito em telas grandes */
+  height: 80%; /* proporcional à tela */
   box-shadow: 0 6px 16px rgba(0,0,0,0.2);
   display: flex;
   flex-direction: column;
@@ -321,40 +404,31 @@ export default {
 .card-scroll {
   overflow-y: auto;
   flex: 1;
-  padding-right: 8px;
+  padding-right: 1%;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 2%;
+  scrollbar-width: none;
 }
 
 .daily-item {
   background: #f7f7f7;
   border-radius: 12px;
-  padding: 12px 16px;
+  padding: 2%;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   cursor: pointer;
 }
 
-.message {
-  background: #f7f7f7;
-  padding: 12px 16px;
-  border-radius: 12px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  transition: transform 0.2s;
-}
-.message:hover {
-  transform: scale(1.02);
-}
 .author {
   font-weight: 600;
-  margin-bottom: 4px;
+  margin-bottom: 2%;
   color: #2c5364;
 }
 .text {
-  margin-bottom: 4px;
+  margin-bottom: 2%;
 }
 .time {
-  font-size: 12px;
+  font-size: 0.8rem;
   color: #888;
   text-align: right;
 }
@@ -377,10 +451,14 @@ export default {
 }
 .dialog-title {
   font-weight: 600;
-  font-size: 16px;
+  font-size: 1rem;
 }
 .dialog-content {
-  padding: 16px;
-  font-size: 14px;
+  padding: 2%;
+  font-size: 0.9rem;
+  scrollbar-width: none;
 }
+
+
 </style>
+
