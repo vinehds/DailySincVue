@@ -66,7 +66,7 @@ html, body, #app {
   margin: 0;
   padding: 0;
 
-  overflow-x: hidden;
+  overflow: hidden;
 }
 
 

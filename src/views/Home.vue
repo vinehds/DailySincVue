@@ -12,7 +12,7 @@
 
       <el-container class="content-container">
 
-        <el-main>
+        <div>
           <div class="filters">
             <div>
               <el-form :inline="true" label-position="top" style="display: flex; gap: 30px">
@@ -109,7 +109,7 @@
               <el-button type="primary" @click="enviarResposta">Enviar resposta</el-button>
             </template>
           </el-dialog>
-        </el-main>
+        </div>
       </el-container>
     </div>
   </el-container>
@@ -394,7 +394,7 @@ export default {
   width: 95%; /* agora responsivo */
   margin-top: 1%;
   max-width: 90%; /* evita estourar muito em telas grandes */
-  height: 80%; /* proporcional à tela */
+  height: 27%; /* proporcional à tela */
   box-shadow: 0 6px 16px rgba(0,0,0,0.2);
   display: flex;
   flex-direction: column;
