@@ -85,7 +85,7 @@ export default {
 
   data() {
     return {
-      URL_API: "http://192.168.1.8:8080",
+      URL_API: "http://localhost:8080",
       teams: [],
       allMembers: [],
       editDialogVisible: false,

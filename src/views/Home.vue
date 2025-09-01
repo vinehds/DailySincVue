@@ -2,6 +2,8 @@
   <el-container class="container">
     <div class="main-layout">
       <aside class="sidebar">
+
+        <span v-if="teamsItens.length === 0"> Nenhum time cadastrado</span>
         <ul>
           <li v-for="(item, index) in teamsItens" :key="index" :class="{ active: teamSelected === item.id }"
               @click="selectMenu(item.id)">
@@ -77,32 +79,47 @@
 
             <template #header>
               <div class="dialog-header">
-                <el-button icon="ArrowLeft" circle @click="prevDaily" :disabled="currentIndex === 0"><</el-button>
+                <el-button
+                    class="daily-btn-index"
+                    :icon="ArrowLeft"
+                    circle
+                    @click="prevDaily"
+                    :disabled="isFirstDaily"
+                    aria-label="Daily anterior"
+                >
+                </el-button>
+
                 <span class="dialog-title">
                 Autor {{ dailiesFiltered[currentIndex]?.authorId }} -
                 {{ dailiesFiltered[currentIndex]?.date }}
                 </span>
-                <el-button icon="ArrowRight"
+                <el-button
+                    class="daily-btn-index"
+                    :icon="ArrowRight"
                     circle
                     @click="nextDaily"
-                    :disabled="currentIndex === dailiesFiltered.length - 1"
-                >></el-button>
+                    :disabled="isLastDaily"
+                    aria-label="Próxima daily"
+                >
+                </el-button>
+
               </div>
             </template>
 
-            <div class="dialog-content">
-              <p><b>Ontem:</b> {{ dailiesFiltered[currentIndex]?.lastDayLog }}</p>
-              <p><b>Hoje:</b> {{ dailiesFiltered[currentIndex]?.nextDayPlan }}</p>
+            <transition name="fade-slide" mode="out-in">
+              <div class="dialog-content" :key="currentIndex">
+                <p><b>Ontem:</b> {{ dailiesFiltered[currentIndex]?.lastDayLog }}</p>
+                <p><b>Hoje:</b> {{ dailiesFiltered[currentIndex]?.nextDayPlan }}</p>
 
-              <el-input
-                  v-model="dailyResponse"
-                  type="textarea"
-                  placeholder="Escreva sua resposta..."
-                  rows="3"
-                  class="mt-3"
-              />
-
-            </div>
+                <el-input
+                    v-model="dailyResponse"
+                    type="textarea"
+                    placeholder="Escreva sua resposta..."
+                    rows="3"
+                    class="mt-3"
+                />
+              </div>
+            </transition>
 
             <template #footer>
               <el-button type="danger" @click="showModal = false">Fechar</el-button>
@@ -118,12 +135,14 @@
 <script>
 import axios from "axios";
 import DeveloperSidebar from "@/components/DeveloperSidebar.vue";
+import { ArrowRight, ArrowLeft } from '@element-plus/icons-vue'
+
 
 export default {
-  components: {DeveloperSidebar},
+  components: {DeveloperSidebar, ArrowRight, ArrowLeft},
   data() {
     return {
-      URL_API: "http://192.168.1.8:8080",
+      URL_API: "http://localhost:8080",
 
       selectedDate: null,
       devsSelected: [],
@@ -299,12 +318,76 @@ export default {
   mounted() {
     this.initPage();
   },
+  computed: {
+    ArrowLeft() {
+      return ArrowLeft
+    },
+    ArrowRight() {
+      return ArrowRight
+    },
+    isLastDaily() {
+      return this.currentIndex === this.dailiesFiltered.length - 1
+    },
+    isFirstDaily() {
+      return this.currentIndex === 0
+    }
+  }
+
 };
 </script>
 
 
 <style scoped>
+/* Fade + slide da esquerda/direita */
+.fade-slide-enter-active, .fade-slide-leave-active {
+  transition: all 0.3s ease;
+}
+.fade-slide-enter-from {
+  opacity: 0;
+  transform: translateY(30px);
+}
+.fade-slide-enter-to {
+  opacity: 1;
+  transform: translateX(0);
+}
+.fade-slide-leave-from {
+  opacity: 1;
+  transform: translateX(0);
+}
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateY(30px);
+}
 
+
+.daily-btn-index {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Hover suave */
+.daily-btn-index:hover:not(:disabled) {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Clique (efeito "pressionado") */
+.daily-btn-index:active:not(:disabled) {
+  transform: scale(0.9);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25) inset;
+}
+
+/* Estado desabilitado */
+.daily-btn-index:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+
+body{
+  overflow-y: hidden;
+}
 
 .resumo-dialog .dialog-header {
   display: flex;
@@ -360,7 +443,7 @@ export default {
   margin: 1%;
   border-radius: 20px;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2);
-  height: 83%;
+  height: 74%;
 }
 .sidebar ul {
   list-style: none;
@@ -394,7 +477,7 @@ export default {
   width: 95%; /* agora responsivo */
   margin-top: 1%;
   max-width: 90%; /* evita estourar muito em telas grandes */
-  height: 27%; /* proporcional à tela */
+  height: 40%; /* proporcional à tela */
   box-shadow: 0 6px 16px rgba(0,0,0,0.2);
   display: flex;
   flex-direction: column;
