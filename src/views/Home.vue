@@ -45,6 +45,7 @@
           </div>
 
           <div class="card-container">
+            <div v-if="dailiesFiltered.length === 0">Nenhuma daily encontrada</div>
             <div class="card-scroll">
 
               <div v-for="(daily, index) in dailiesFiltered" :key="daily.id" class="daily-item" @click="openDaily(index)">
@@ -134,12 +135,11 @@
 
 <script>
 import axios from "axios";
-import DeveloperSidebar from "@/components/DeveloperSidebar.vue";
 import { ArrowRight, ArrowLeft } from '@element-plus/icons-vue'
 
 
 export default {
-  components: {DeveloperSidebar, ArrowRight, ArrowLeft},
+  components: {ArrowRight, ArrowLeft},
   data() {
     return {
       URL_API: "http://localhost:8080",
@@ -428,7 +428,7 @@ body{
 .main-layout {
   margin-top: 1%;
   display: flex;
-  min-height: 90vh;
+  min-height: 95vh;
   background: inherit;
   padding: 2%;
   width: 100%;
@@ -443,7 +443,7 @@ body{
   margin: 1%;
   border-radius: 20px;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2);
-  height: 74%;
+  height: 70%;
 }
 .sidebar ul {
   list-style: none;
@@ -474,10 +474,8 @@ body{
   background: #fff;
   border-radius: 20px;
   padding: 2%;
-  width: 95%; /* agora responsivo */
   margin-top: 1%;
-  max-width: 90%; /* evita estourar muito em telas grandes */
-  height: 40%; /* proporcional à tela */
+  height: 110%; /* proporcional à tela */
   box-shadow: 0 6px 16px rgba(0,0,0,0.2);
   display: flex;
   flex-direction: column;

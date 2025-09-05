@@ -12,7 +12,7 @@
       >
         <el-menu-item index="/home" class="item">🏠 Home</el-menu-item>
         <el-menu-item index="/team" class="item">👥 Teams</el-menu-item>
-        <el-menu-item index="/teste" class="item">🧪 Teste</el-menu-item>
+        <el-menu-item index="/dev" class="item">👨‍💻 Devs</el-menu-item>
       </el-menu>
     </header>
   </div>

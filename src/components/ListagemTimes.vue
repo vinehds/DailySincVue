@@ -1,14 +1,8 @@
 <template>
   <section class="carousel-section">
-    <el-carousel
-        height="300px"
-        type="card"
-        interval="0"
-        indicator-position="outside"
-        arrow="always"
-        class="carousel"
-    >
-      <!-- Renderiza os times -->
+
+    <el-carousel v-if="teams.length > 0" height="300px" type="card" interval="0" indicator-position="outside"
+        arrow="always" class="carousel">
       <el-carousel-item
           v-for="(team, index) in teams"
           :key="index"
@@ -21,12 +15,10 @@
       </el-carousel-item>
     </el-carousel>
 
-    <!-- Mensagem caso não haja times -->
-    <div v-if="teams.length === 0" class="no-teams-msg">
-      Nenhum time cadastrado.
+    <div v-if="teams.length === 0" style="color: #ffffff; font-weight: bold; text-align: center; margin: 50px">
+      Nenhuma equipe cadastrada
     </div>
 
-    <!-- Botão adicionar time abaixo do carrossel -->
     <div class="add-team-container">
       <el-button
           class="add-team-button"
@@ -36,7 +28,6 @@
       </el-button>
     </div>
 
-    <!-- Modal de edição/criação -->
     <el-dialog
         v-model="editDialogVisible"
         :title="isAdding ? 'Adicionar Time' : 'Editar Time'"
@@ -70,11 +61,13 @@
 
       <template #footer>
         <el-button @click="editDialogVisible = false">Cancelar</el-button>
+        <el-button @click="deleteTeam(editForm.id)" color="red" v-if="!isAdding">Deletar</el-button>
         <el-button type="primary" @click="saveEdit">
           {{ isAdding ? 'Adicionar' : 'Salvar' }}
         </el-button>
       </template>
     </el-dialog>
+
   </section>
 </template>
 
@@ -99,6 +92,17 @@ export default {
     };
   },
   methods: {
+    async deleteTeam(teamID) {
+      try {
+        const response = await axios.delete(this.URL_API.concat(`/teams/${teamID}`));
+        this.editDialogVisible = false;
+        await this.getTeams();
+        this.$message("Time deletado com sucesso!");
+      }  catch (error) {
+        console.error("Erro ao deletar time:", error);
+      }
+    },
+
     async getTeams() {
       try {
         const response = await axios.get(`${this.URL_API}/teams`);
@@ -165,7 +169,7 @@ export default {
 
 /* Mantém estilos dos cards e botão adicionar Time */
 .add-team-container {
-  margin-top: 20px;
+  margin-top: 15px;
   display: flex;
   justify-content: center;
 }
@@ -196,7 +200,6 @@ export default {
 }
 
 .carousel-section {
-  margin-top: 40px;
   width: 80%;
   max-width: 1200px;
   background: transparent !important;

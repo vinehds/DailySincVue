@@ -2,7 +2,6 @@
   <div class="main-content">
     <el-container class="content-container">
       <listagem-times />
-
       <el-main>
         <router-view />
       </el-main>
@@ -28,7 +27,7 @@ body{
 }
 
 .content-container {
-  margin-top: 10%;
+  margin-top: 5%;
   height: 100vh;
   display: flex;
   justify-content: center;
