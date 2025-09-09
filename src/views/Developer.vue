@@ -3,25 +3,34 @@
     <!-- Título -->
     <h2 class="page-title">Gerenciamento de Desenvolvedores</h2>
 
+    <!-- Botão para adicionar -->
+    <div class="add-dev-container">
+      <el-button type="success" @click="openAddModal">
+        + Adicionar Desenvolvedor
+      </el-button>
+    </div>
+
     <!-- Tabela -->
     <el-table
         v-if="developers.length > 0"
-        :data="developers"
+        :data="paginatedDevelopers"
         border
         stripe
         class="dev-table"
+        :height="tableHeight"
     >
       <el-table-column prop="id" label="ID" width="60" />
       <el-table-column prop="name" label="Nome" min-width="180" />
       <el-table-column prop="department" label="Departamento" min-width="140" />
-      <el-table-column prop="responsability" label="Responsabilidade" min-width="140" />
-      <el-table-column prop="teamId" label="Team ID" width="100" />
-      <el-table-column
-          prop="dailiesId"
-          label="Dailies"
-          min-width="160"
-          :formatter="(row) => row.dailiesId.join(', ')"
-      />
+      <el-table-column prop="responsability" label="Nível de Acesso" min-width="140" />
+
+      <!-- Exibe o nome do time -->
+      <el-table-column label="Time" min-width="160">
+        <template #default="scope">
+          {{ getTeamName(scope.row.teamId) }}
+        </template>
+      </el-table-column>
+
       <el-table-column label="Ações" width="180">
         <template #default="scope">
           <el-button
@@ -38,16 +47,21 @@
       </el-table-column>
     </el-table>
 
-    <!-- Caso não tenha desenvolvedores -->
-    <div v-else class="empty-message">
-      Nenhum desenvolvedor cadastrado
+    <!-- Paginação -->
+    <div class="pagination" v-if="developers.length > 5">
+      <el-pagination
+          background
+          layout="prev, pager, next"
+          :total="developers.length"
+          :page-size="pageSize"
+          style="justify-content: center"
+          v-model:current-page="currentPage"
+      />
     </div>
 
-    <!-- Botão para adicionar -->
-    <div class="add-dev-container">
-      <el-button type="success" @click="openAddModal">
-        + Adicionar Desenvolvedor
-      </el-button>
+    <!-- Caso não tenha desenvolvedores -->
+    <div v-if="developers.length === 0" class="empty-message">
+      Nenhum desenvolvedor cadastrado
     </div>
 
     <!-- Modal de Adição/Edição -->
@@ -62,28 +76,29 @@
         </el-form-item>
 
         <el-form-item label="Departamento">
-          <el-input v-model="editForm.department" />
+          <el-select v-model="editForm.department" placeholder="Selecione">
+            <el-option label="WEB_DEVELOPER" value="WEB_DEVELOPER" />
+            <el-option label="DESK_DEVELOPER" value="DESK_DEVELOPER" />
+            <el-option label="OTHER" value="OTHER" />
+          </el-select>
         </el-form-item>
 
         <el-form-item label="Responsabilidade">
           <el-select v-model="editForm.responsability" placeholder="Selecione">
             <el-option label="MEMBER" value="MEMBER" />
-            <el-option label="LEADER" value="LEADER" />
-            <el-option label="MANAGER" value="MANAGER" />
+            <el-option label="TECHLEAD" value="TECHLEAD" />
+            <el-option label="ADMIN" value="ADMIN" />
           </el-select>
         </el-form-item>
 
-        <el-form-item label="Equipe (teamId)">
-          <el-input-number v-model="editForm.teamId" :min="1" />
-        </el-form-item>
-
-        <el-form-item label="Dailies (IDs)">
-          <el-select v-model="editForm.dailiesId" multiple placeholder="Selecione os IDs">
+        <!-- Seleção dinâmica do time -->
+        <el-form-item label="Equipe">
+          <el-select v-model="editForm.teamId" placeholder="Selecione o time">
             <el-option
-                v-for="id in availableDailies"
-                :key="id"
-                :label="`Daily ${id}`"
-                :value="id"
+                v-for="team in teams"
+                :key="team.id"
+                :label="team.teamName"
+                :value="team.id"
             />
           </el-select>
         </el-form-item>
@@ -108,18 +123,27 @@ export default {
     return {
       URL_API: "http://localhost:8080",
       developers: [],
-      availableDailies: [1, 2, 3, 4, 5],
+      teams: [],
       editDialogVisible: false,
       isAdding: false,
       editForm: {
         id: null,
         name: "",
         teamId: null,
-        dailiesId: [],
         department: "",
-        responsability: "MEMBER"
-      }
+        responsability: ""
+      },
+      // paginação
+      currentPage: 1,
+      pageSize: 5,
+      tableHeight: 250   // padrão
     };
+  },
+  computed: {
+    paginatedDevelopers() {
+      const start = (this.currentPage - 1) * this.pageSize;
+      return this.developers.slice(start, start + this.pageSize);
+    }
   },
   methods: {
     async getDevelopers() {
@@ -130,6 +154,21 @@ export default {
         console.error("Erro ao buscar desenvolvedores:", error);
         this.developers = [];
       }
+    },
+
+    async getTeams() {
+      try {
+        const response = await axios.get(`${this.URL_API}/teams`);
+        this.teams = response.data || [];
+      } catch (error) {
+        console.error("Erro ao buscar times:", error);
+        this.teams = [];
+      }
+    },
+
+    getTeamName(teamId) {
+      const team = this.teams.find(t => t.id === teamId);
+      return team ? team.teamName : "Sem time";
     },
 
     async saveEdit() {
@@ -163,7 +202,7 @@ export default {
 
     openAddModal() {
       this.isAdding = true;
-      this.editForm = { id: null, name: "", teamId: null, dailiesId: [], department: "", responsability: "MEMBER" };
+      this.editForm = { id: null, name: "", teamId: null, department: "", responsability: "" };
       this.editDialogVisible = true;
     },
 
@@ -171,29 +210,54 @@ export default {
       this.isAdding = false;
       this.editForm = { ...dev };
       this.editDialogVisible = true;
-    }
+    },
+
+    adjustTableForScreen() {
+      const screenHeight = window.innerHeight;
+      if (screenHeight >= 1080) {
+        this.pageSize = 10;
+        this.tableHeight = 500;
+      } else {
+        this.pageSize = 5;
+        this.tableHeight = 250;
+      }
+    },
   },
   mounted() {
     this.getDevelopers();
+    this.getTeams();
+    this.adjustTableForScreen();
+    window.addEventListener("resize", this.adjustTableForScreen);
+  },
+  beforeUnmount() {
+    window.removeEventListener("resize", this.adjustTableForScreen);
   }
 };
 </script>
 
+
 <style scoped>
+
+body{
+  margin: 0;
+  padding: 0;
+  height: 100vh;
+  overflow: hidden;
+}
 .page-title {
   color: #ffffff;
   text-align: center;
-  margin-bottom: 20px;
+  margin-top: 50px;
+  margin-bottom: -25px;
 }
 
 .dev-table {
   width: 90%;
   margin: 0 auto 20px auto;
-  border-radius: 12px;
-  overflow: hidden;
-  font-family: "Inter", sans-serif;
+  border-radius: 10px;
   background-color: #fff; /* fundo clean */
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1); /* sombra suave */
+  border-style: none;
 }
 
 /* Cabeçalho mais destacado */
@@ -235,8 +299,16 @@ export default {
 }
 
 .add-dev-container {
-  margin-top: 20px;
+  margin: 20px;
   display: flex;
-  justify-content: center;
+  justify-content: end;
+  width: 93%;
 }
+
+:deep(.el-pagination.is-background .el-pager li.is-active) {
+  background-color: #294f5b  !important;
+  color: #fff !important;
+  border-color: #294f5b  !important;
+}
+
 </style>
