@@ -99,7 +99,8 @@ export default {
         await this.getTeams();
         this.$message("Time deletado com sucesso!");
       }  catch (error) {
-        console.error("Erro ao deletar time:", error);
+        this.$message.error("Erro ao deletar equipe")
+        console.error("Erro ao deletar Equipe:", error);
       }
     },
 
@@ -108,7 +109,7 @@ export default {
         const response = await axios.get(`${this.URL_API}/teams`);
         this.teams = response.data || [];
       } catch (error) {
-        console.error("Erro ao buscar times:", error);
+        console.error("Erro ao buscar equipes:", error);
         this.teams = [];
       }
     },
