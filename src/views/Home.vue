@@ -25,8 +25,8 @@
                 </el-form-item>
 
                 <el-form-item label="Filtrar por Dev">
-                  <el-select v-model="devsSelected" placeholder="Devs" class="modern-input" style="width: 200px" multiple
-                             collapse-tags clearable @change="handleSelectChange">
+                  <el-select v-model="devsSelected" placeholder="Devs" class="modern-input" style="width: 350px"
+                             collapse-tags clearable @change="handleSelectChange" multiple>
 
                     <el-option label="Todos" value="all" />
 
@@ -37,10 +37,9 @@
               </el-form>
             </div>
 
-              <el-button type="primary" class="rounded" @click="abrirResumo" style="margin-top: 30px; margin-right: 20px">
+              <el-button type="primary" class="rounded" @click="abrirResumo">
                 Gerar resumo
               </el-button>
-
 
           </div>
 
@@ -143,7 +142,6 @@ export default {
   data() {
     return {
       URL_API: "http://localhost:8080",
-
       selectedDate: null,
       devsSelected: [],
       dailys: [],
@@ -153,12 +151,9 @@ export default {
       showModal: false,
       currentIndex: 0,
       teamsItens: [],
-
       showResumo: false,
       resumoTexto: "",
-
       dailyResponse: "",
-
       teamSelected: "dashboard",
     };
   },
@@ -168,7 +163,6 @@ export default {
       if (!currentDaily) return;
 
       try {
-
         this.$message.success("Resposta enviada com sucesso!");
         this.dailyResponse = "";
         this.showDialog = false;
@@ -212,13 +206,10 @@ export default {
     selectMenu(value) {
       this.teamSelected = value;
 
-      // 1 - Atualiza lista de devs filtrados
       this.devsFilter(value);
 
-      // 2 - Seleciona automaticamente todos os devs desse time
       this.devsSelected = this.devsFiltered.map(d => d.id);
 
-      // 3 - Atualiza filtro das dailies
       this.dailyFilter(this.devsSelected);
     },
 
@@ -242,30 +233,23 @@ export default {
       return `${day}/${month}/${year}`;
     },
 
-
     async initPage() {
       try {
-        // 1 - Buscar times
         const teamsResp = await axios.get(this.URL_API.concat("/teams"));
         this.teamsItens = teamsResp.data;
 
         if (this.teamsItens.length === 0) return;
 
-        // 2 - Selecionar o primeiro time
         const firstTeamId = this.teamsItens[0].id;
         this.teamSelected = firstTeamId;
 
-        // 3 - Buscar devs
         const devsResp = await axios.get(this.URL_API.concat("/developers"));
         this.devs = devsResp.data;
 
-        // 4 - Filtrar devs do time selecionado
         this.devsFilter(firstTeamId);
 
-        // 5 - Selecionar todos os devs filtrados
         this.devsSelected = this.devsFiltered.map(d => d.id);
 
-        // 6 - Buscar dailies da data atual
         const today = new Date();
         const formattedDate = this.formatDateToDDMMYYYY(today);
         const dailiesResp = await axios.get(
@@ -273,7 +257,6 @@ export default {
         );
         this.dailys = dailiesResp.data;
 
-        // 7 - Filtrar dailies pelos devs selecionados
         this.dailyFilter(this.devsSelected);
       } catch (error) {
         console.error("Erro no init:", error);
@@ -296,7 +279,6 @@ export default {
         return;
       }
 
-      // Monta o texto do resumo
       this.resumoTexto = this.dailiesFiltered.map(d => {
         const dev = this.devs.find(x => x.id === d.authorId);
         return `👤 ${dev ? dev.name : "Desconhecido"} (${d.date})\n- Ontem: ${d.lastDayLog}\n- Hoje: ${d.nextDayPlan}\n`;
@@ -338,7 +320,6 @@ export default {
 
 
 <style scoped>
-/* Fade + slide da esquerda/direita */
 .fade-slide-enter-active, .fade-slide-leave-active {
   transition: all 0.3s ease;
 }
@@ -359,24 +340,17 @@ export default {
   transform: translateY(30px);
 }
 
-
 .daily-btn-index {
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
-
-/* Hover suave */
 .daily-btn-index:hover:not(:disabled) {
   transform: scale(1.1);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
-
-/* Clique (efeito "pressionado") */
 .daily-btn-index:active:not(:disabled) {
   transform: scale(0.9);
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25) inset;
 }
-
-/* Estado desabilitado */
 .daily-btn-index:disabled {
   opacity: 0.5;
   cursor: not-allowed;
@@ -384,8 +358,7 @@ export default {
   box-shadow: none;
 }
 
-
-body{
+body {
   overflow-y: hidden;
 }
 
@@ -394,7 +367,6 @@ body{
   justify-content: space-between;
   align-items: center;
 }
-
 .resumo-content {
   background: #f9f9f9;
   padding: 15px;
@@ -408,49 +380,37 @@ body{
   scrollbar-width: none;
 }
 
+/* ----------- Layout principal responsivo ----------- */
 .container {
-  width: 100%;
+  width: 95%;
   height: 100vh;
   display: flex;
   flex-direction: column;
-  justify-content: center;
-  align-items: center;
-
 }
-
-.content-container {
-  flex: 1;
-  padding: 2%;
-  display: flex;
-  flex-direction: column;
-}
-
 .main-layout {
-  margin-top: 1%;
   display: flex;
-  min-height: 95vh;
-  background: inherit;
-  padding: 2%;
-  width: 100%;
-  justify-content: center;
+  flex: 1;
+  padding: 1%;
+  gap: 1rem;
+  max-height: 100%;
 }
-
 .sidebar {
-  width: 15%;
+  flex: 0 0 15%;
   background: linear-gradient(180deg, #2c5364, #203a43, #0f2027);
   color: white;
-  padding: 2%;
-  margin: 1%;
+  padding: 1rem;
   border-radius: 20px;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2);
-  height: 70%;
+  max-height: 500px;
+  overflow-y: auto;
 }
 .sidebar ul {
   list-style: none;
   padding: 0;
+  margin: 0;
 }
 .sidebar li {
-  padding: 5% 8%;
+  padding: 0.8rem;
   border-radius: 12px;
   cursor: pointer;
   transition: background 0.3s, transform 0.2s;
@@ -464,49 +424,51 @@ body{
   transform: scale(1.03);
 }
 
+.content-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
 .filters {
   display: flex;
+  flex-wrap: wrap;
   justify-content: space-between;
-  max-width: 95%; /* evita estourar muito em telas grandes */
+  align-items: flex-end;
+  margin-left: 25px;
+  margin-top: 25px;
 }
-
 .card-container {
+  flex: 1;
   background: #fff;
   border-radius: 20px;
-  padding: 2%;
-  margin-top: 1%;
-  height: 110%; /* proporcional à tela */
+  padding: 1rem;
   box-shadow: 0 6px 16px rgba(0,0,0,0.2);
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  min-height: 0;
+  margin: 5px 25px;
 }
-
 .card-scroll {
-  overflow-y: auto;
   flex: 1;
-  padding-right: 1%;
-  display: flex;
-  flex-direction: column;
-  gap: 2%;
-  scrollbar-width: none;
+  overflow-y: auto;
+  display: grid;
+  gap: 1rem;
 }
-
 .daily-item {
   background: #f7f7f7;
   border-radius: 12px;
-  padding: 2%;
+  padding: 1rem;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   cursor: pointer;
 }
-
 .author {
   font-weight: 600;
-  margin-bottom: 2%;
+  margin-bottom: 0.5rem;
   color: #2c5364;
 }
 .text {
-  margin-bottom: 2%;
+  margin-bottom: 0.5rem;
 }
 .time {
   font-size: 0.8rem;
@@ -514,6 +476,7 @@ body{
   text-align: right;
 }
 
+/* ----------- Estilização de inputs/botões ----------- */
 .rounded,
 .el-button,
 .el-input,
@@ -525,6 +488,12 @@ body{
   color: white;
 }
 
+.rounded{
+  margin-bottom: 15px;
+  margin-right: 30px;
+}
+
+/* ----------- Dialogs ----------- */
 .daily-dialog .dialog-header {
   display: flex;
   justify-content: space-between;
@@ -540,6 +509,39 @@ body{
   scrollbar-width: none;
 }
 
+/* ----------- Responsividade ----------- */
+@media (max-width: 1024px) {
+  .main-layout {
+    flex-direction: column;
+  }
+  .sidebar {
+    flex: 0 0 auto;
+    width: 100%;
+    display: flex;
+    overflow-x: auto;
+  }
+  .sidebar ul {
+    display: flex;
+    gap: 1rem;
+  }
+}
+@media (min-width: 768px) {
+  .card-scroll {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+}
+@media (max-width: 768px) {
+  .filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .filters .el-form {
+    width: 95%;
+  }
+  .card-scroll {
+    grid-template-columns: 1fr;
+  }
+}
 
 </style>
 

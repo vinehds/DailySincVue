@@ -3,16 +3,32 @@
     <!-- Título -->
     <h2 class="page-title">Gerenciamento de Desenvolvedores</h2>
 
-    <!-- Botão para adicionar -->
-    <div class="add-dev-container">
-      <el-button type="success" @click="openAddModal">
+    <!-- Barra de ações -->
+    <div class="actions-container">
+      <!-- Filtro por time -->
+      <el-select
+          v-model="selectedTeamId"
+          placeholder="Filtrar por time"
+          clearable
+          class="team-filter"
+      >
+        <el-option
+            v-for="team in teams"
+            :key="team.id"
+            :label="team.teamName"
+            :value="team.id"
+        />
+      </el-select>
+
+      <!-- Botão para adicionar -->
+      <el-button class="btnAdd" type="success" @click="openAddModal">
         + Adicionar Desenvolvedor
       </el-button>
     </div>
 
     <!-- Tabela -->
     <el-table
-        v-if="developers.length > 0"
+        v-if="filteredDevelopers.length > 0"
         :data="paginatedDevelopers"
         border
         stripe
@@ -48,11 +64,11 @@
     </el-table>
 
     <!-- Paginação -->
-    <div class="pagination" v-if="developers.length > 5">
+    <div class="pagination" v-if="filteredDevelopers.length > pageSize">
       <el-pagination
           background
           layout="prev, pager, next"
-          :total="developers.length"
+          :total="filteredDevelopers.length"
           :page-size="pageSize"
           style="justify-content: center"
           v-model:current-page="currentPage"
@@ -60,8 +76,8 @@
     </div>
 
     <!-- Caso não tenha desenvolvedores -->
-    <div v-if="developers.length === 0" class="empty-message">
-      Nenhum desenvolvedor cadastrado
+    <div v-if="filteredDevelopers.length === 0" class="empty-message">
+      Nenhum desenvolvedor encontrado
     </div>
 
     <!-- Modal de Adição/Edição -->
@@ -136,13 +152,18 @@ export default {
       // paginação
       currentPage: 1,
       pageSize: 5,
-      tableHeight: 250   // padrão
+      tableHeight: 300,
+      selectedTeamId: null
     };
   },
   computed: {
+    filteredDevelopers() {
+      if (!this.selectedTeamId) return this.developers;
+      return this.developers.filter(dev => dev.teamId === this.selectedTeamId);
+    },
     paginatedDevelopers() {
       const start = (this.currentPage - 1) * this.pageSize;
-      return this.developers.slice(start, start + this.pageSize);
+      return this.filteredDevelopers.slice(start, start + this.pageSize);
     }
   },
   methods: {
@@ -219,7 +240,7 @@ export default {
         this.tableHeight = 500;
       } else {
         this.pageSize = 5;
-        this.tableHeight = 250;
+        this.tableHeight = 300;
       }
     },
   },
@@ -235,9 +256,7 @@ export default {
 };
 </script>
 
-
 <style scoped>
-
 body{
   margin: 0;
   padding: 0;
@@ -248,7 +267,21 @@ body{
   color: #ffffff;
   text-align: center;
   margin-top: 50px;
-  margin-bottom: -25px;
+}
+
+.actions-container {
+  margin: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 93%;
+}
+
+.team-filter {
+  min-width: 200px;
+  max-width: 300px;
+  margin-top: 20px;
+  margin-left: 50px;
 }
 
 .dev-table {
@@ -290,7 +323,6 @@ body{
   background-color: #962d22;
 }
 
-
 .empty-message {
   text-align: center;
   color: #ffffff;
@@ -298,17 +330,14 @@ body{
   margin: 50px 0;
 }
 
-.add-dev-container {
-  margin: 20px;
-  display: flex;
-  justify-content: end;
-  width: 93%;
-}
-
 :deep(.el-pagination.is-background .el-pager li.is-active) {
   background-color: #294f5b  !important;
   color: #fff !important;
   border-color: #294f5b  !important;
+}
+
+.btnAdd{
+  margin-bottom: -25px;
 }
 
 </style>

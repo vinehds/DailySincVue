@@ -43,20 +43,21 @@
         </el-form-item>
 
         <el-form-item label="Membros">
-          <el-select
-              v-model="editForm.membersId"
-              multiple
-              placeholder="Selecione os membros"
-              style="width: 100%"
-          >
-            <el-option
-                v-for="member in allMembers"
-                :key="member.id"
-                :label="member.name"
-                :value="member.id"
-            />
-          </el-select>
+          <div v-if="editForm.membersId && editForm.membersId.length > 0">
+            <el-tag
+                v-for="memberId in editForm.membersId"
+                :key="memberId"
+                type="info"
+                class="member-tag"
+            >
+              {{ getMemberName(memberId) }}
+            </el-tag>
+          </div>
+          <div v-else style="color: #999; font-style: italic;">
+            Nenhum membro associado
+          </div>
         </el-form-item>
+
       </el-form>
 
       <template #footer>
@@ -92,6 +93,11 @@ export default {
     };
   },
   methods: {
+    getMemberName(id) {
+      const member = this.allMembers.find(m => m.id === id);
+      return member ? member.name : "Desconhecido";
+    },
+
     async deleteTeam(teamID) {
       try {
         const response = await axios.delete(this.URL_API.concat(`/teams/${teamID}`));
@@ -166,9 +172,6 @@ export default {
   margin-left: 5px;
 }
 
-
-
-/* Mantém estilos dos cards e botão adicionar Time */
 .add-team-container {
   margin-top: 15px;
   display: flex;
@@ -177,9 +180,8 @@ export default {
 
 .add-team-button {
   width: 150px;
-  height: 60px;
+  height: 45px;
   border-radius: 18px;
-  font-weight: bold;
   background: #294f5b;
   color: #FFF;
   display: flex;
@@ -214,7 +216,6 @@ export default {
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
   color: #FFF;
   padding: 20px;
-  font-family: "Inter", sans-serif;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
@@ -229,7 +230,7 @@ export default {
 .team-name {
   font-size: 1.2rem;
   font-weight: 600;
-  margin-top: auto;   /* centraliza verticalmente */
+  margin-top: auto;
   margin-bottom: auto;
 }
 
@@ -263,7 +264,6 @@ export default {
   border-bottom: none !important;
   display: flex;
   justify-content: center;
-  font-family: "Inter", sans-serif;
   font-size: 15px;
   font-weight: 500;
 
@@ -299,8 +299,6 @@ export default {
   align-items: center;
 }
 
-
-
 .carousel ::v-deep(.el-carousel__item) {
   background: transparent !important;
   box-shadow: none !important;
@@ -308,5 +306,9 @@ export default {
 
 .carousel ::v-deep(.el-carousel__card) {
   background: transparent !important;
+}
+
+.member-tag {
+  margin: 3px;
 }
 </style>
