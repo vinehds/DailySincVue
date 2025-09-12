@@ -22,6 +22,7 @@ export default {
 </script>
 
 <style>
+
 .topbar {
   position: fixed;
   top: 0;

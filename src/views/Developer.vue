@@ -288,12 +288,11 @@ body{
   width: 90%;
   margin: 0 auto 20px auto;
   border-radius: 10px;
-  background-color: #fff; /* fundo clean */
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1); /* sombra suave */
+  background-color: #8f8f8f;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
   border-style: none;
 }
 
-/* Cabeçalho mais destacado */
 :deep(.el-table__header-wrapper th) {
   background: linear-gradient(180deg, #203a43, #2c5364);
   color: #fff;

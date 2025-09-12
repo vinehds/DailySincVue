@@ -57,24 +57,6 @@
             </div>
           </div>
 
-          <!-- Modal de Resumo -->
-          <el-dialog v-model="showResumo" width="700px" class="resumo-dialog">
-            <template #header>
-              <div class="dialog-header">
-                <span class="dialog-title">Resumo das Dailies</span>
-                <el-button size="small" type="success" @click="copiarResumo">📋 Copiar</el-button>
-              </div>
-            </template>
-
-            <div class="resumo-content">
-              <pre>{{ resumoTexto }}</pre>
-            </div>
-
-            <template #footer>
-              <el-button type="primary" @click="showResumo = false">Fechar</el-button>
-            </template>
-          </el-dialog>
-
           <el-dialog v-model="showModal" width="600px" :show-close="false" class="daily-dialog">
 
             <template #header>
@@ -127,9 +109,27 @@
             </template>
           </el-dialog>
         </div>
+
       </el-container>
     </div>
   </el-container>
+
+  <el-dialog v-model="showResumo" width="700px" class="resumo-dialog" lock-scroll="false">
+    <template #header>
+      <div class="dialog-header">
+        <span class="dialog-title">Resumo das Dailies</span>
+        <el-button size="small" type="success" @click="copiarResumo">📋 Copiar</el-button>
+      </div>
+    </template>
+
+    <div class="resumo-content">
+      <pre>{{ resumoTexto }}</pre>
+    </div>
+
+    <template #footer>
+      <el-button type="primary" @click="showResumo = false">Fechar</el-button>
+    </template>
+  </el-dialog>
 </template>
 
 <script>
@@ -320,6 +320,7 @@ export default {
 
 
 <style scoped>
+
 .fade-slide-enter-active, .fade-slide-leave-active {
   transition: all 0.3s ease;
 }
@@ -358,20 +359,18 @@ export default {
   box-shadow: none;
 }
 
-body {
-  overflow-y: hidden;
-}
-
 .resumo-dialog .dialog-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
 .resumo-content {
+  overflow: hidden;
+
   background: #f9f9f9;
   padding: 15px;
   border-radius: 12px;
-  max-height: 60vh;
+  max-height: 50vh;
   overflow-y: auto;
   white-space: pre-wrap;
   font-family: "Courier New", monospace;
@@ -439,7 +438,6 @@ body {
   margin-top: 25px;
 }
 .card-container {
-  flex: 1;
   background: #fff;
   border-radius: 20px;
   padding: 1rem;
@@ -448,12 +446,14 @@ body {
   flex-direction: column;
   min-height: 0;
   margin: 5px 25px;
+  max-height: 390px;
 }
 .card-scroll {
-  flex: 1;
-  overflow-y: auto;
-  display: grid;
+  overflow-x: auto;
+  display: flex;
+  flex-direction: column;
   gap: 1rem;
+  max-height: 390px;
 }
 .daily-item {
   background: #f7f7f7;
@@ -461,6 +461,7 @@ body {
   padding: 1rem;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   cursor: pointer;
+  width: 850px;
 }
 .author {
   font-weight: 600;
@@ -507,6 +508,7 @@ body {
   padding: 2%;
   font-size: 0.9rem;
   scrollbar-width: none;
+  overflow-y: hidden;
 }
 
 /* ----------- Responsividade ----------- */
@@ -542,6 +544,5 @@ body {
     grid-template-columns: 1fr;
   }
 }
-
 </style>
 
