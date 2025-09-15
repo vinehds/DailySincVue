@@ -18,6 +18,18 @@
   </div>
 </template>
 
+<script>
+import { useAuthStore } from "@/stores/auth";
+
+export default {
+  methods: {useAuthStore},
+  data() {
+  },
+
+}
+
+</script>
+
 <style scoped>
 
 .container {

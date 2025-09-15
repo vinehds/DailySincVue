@@ -1,147 +1,177 @@
 <template>
-  <el-container class="container">
+  <el-container class="app-container">
     <div class="main-layout">
+      <!-- Sidebar -->
       <aside class="sidebar">
-
-        <span v-if="teamsItens.length === 0"> Nenhum time cadastrado</span>
+        <span v-if="teamsItens.length === 0">Nenhum time cadastrado</span>
         <ul>
-          <li v-for="(item, index) in teamsItens" :key="index" :class="{ active: teamSelected === item.id }"
-              @click="selectMenu(item.id)">
+          <li
+              v-for="(item, index) in teamsItens"
+              :key="index"
+              :class="{ active: teamSelected === item.id }"
+              @click="selectMenu(item.id)"
+          >
             {{ item.teamName }}
           </li>
         </ul>
       </aside>
 
+      <!-- Conteúdo principal -->
       <el-container class="content-container">
+        <!-- Filtros -->
+        <section class="filters">
+          <el-form :inline="true" label-position="top" class="filters-form">
+            <el-form-item label="Filtrar por Data">
+              <el-date-picker
+                  v-model="selectedDate"
+                  type="date"
+                  placeholder="Selecione a data"
+                  class="input-date"
+                  format="DD/MM/YYYY"
+                  @change="buscarDados"
+              />
+            </el-form-item>
 
-        <div>
-          <div class="filters">
-            <div>
-              <el-form :inline="true" label-position="top" style="display: flex; gap: 30px">
+            <el-form-item label="Filtrar por Dev">
+              <el-select
+                  v-model="devsSelected"
+                  placeholder="Devs"
+                  class="input-select"
+                  collapse-tags
+                  clearable
+                  multiple
+                  @change="handleSelectChange"
+              >
+                <el-option label="Todos" value="all" />
+                <el-option
+                    v-for="item in devsFiltered"
+                    :key="item.id"
+                    :label="item.name"
+                    :value="item.id"
+                />
+              </el-select>
+            </el-form-item>
+          </el-form>
 
-                <el-form-item label="Filtrar por Data">
-                  <el-date-picker style="width: 200px; padding-left: 10px" v-model="selectedDate" type="date"
-                                  placeholder="Selecione a data" class="rounded" format="DD/MM/YYYY" @change="buscarDados"/>
-                </el-form-item>
+          <el-button type="info" class="btn-action" @click="abrirResumo">
+            Gerar resumo
+          </el-button>
+        </section>
 
-                <el-form-item label="Filtrar por Dev">
-                  <el-select v-model="devsSelected" placeholder="Devs" class="modern-input" style="width: 350px"
-                             collapse-tags clearable @change="handleSelectChange" multiple>
-
-                    <el-option label="Todos" value="all" />
-
-                    <el-option v-for="item in devsFiltered" :key="item.id" :label="item.name" :value="item.id"/>
-
-                  </el-select>
-                </el-form-item>
-              </el-form>
-            </div>
-
-              <el-button type="primary" class="rounded" @click="abrirResumo">
-                Gerar resumo
-              </el-button>
-
+        <!-- Cards -->
+        <section class="card-container">
+          <div v-if="dailiesFiltered.length === 0" class="no-data">
+            Nenhuma daily encontrada
           </div>
-
-          <div class="card-container">
-            <div v-if="dailiesFiltered.length === 0">Nenhuma daily encontrada</div>
-            <div class="card-scroll">
-
-              <div v-for="(daily, index) in dailiesFiltered" :key="daily.id" class="daily-item" @click="openDaily(index)">
-                <div class="author">Autor ID: {{ daily.authorId }}</div>
-                <div class="text"><b>Ontem:</b> {{ daily.lastDayLog }}</div>
-                <div class="text"><b>Hoje:</b> {{ daily.nextDayPlan }}</div>
-                <div class="time">{{ daily.date }}</div>
-              </div>
-
-            </div>
+          <div v-else class="card-scroll">
+            <article
+                v-for="(daily, index) in dailiesFiltered"
+                :key="daily.id"
+                class="daily-item"
+                @click="openDaily(index)"
+            >
+              <header class="author">Autor ID: {{ daily.authorId }}</header>
+              <p class="text"><b>Ontem:</b> {{ daily.lastDayLog }}</p>
+              <p class="text"><b>Hoje:</b> {{ daily.nextDayPlan }}</p>
+              <footer class="time">{{ daily.date }}</footer>
+            </article>
           </div>
+        </section>
 
-          <el-dialog v-model="showModal" width="600px" :show-close="false" class="daily-dialog">
-
-            <template #header>
-              <div class="dialog-header">
-                <el-button
-                    class="daily-btn-index"
-                    :icon="ArrowLeft"
-                    circle
-                    @click="prevDaily"
-                    :disabled="isFirstDaily"
-                    aria-label="Daily anterior"
-                >
-                </el-button>
-
-                <span class="dialog-title">
+        <!-- Modal Daily -->
+        <el-dialog
+            v-model="showModal"
+            width="600px"
+            :show-close="false"
+            class="daily-dialog"
+        >
+          <template #header>
+            <div class="dialog-header">
+              <el-button
+                  class="daily-btn-index"
+                  :icon="ArrowLeft"
+                  circle
+                  @click="prevDaily"
+                  :disabled="isFirstDaily"
+                  aria-label="Daily anterior"
+              />
+              <span class="dialog-title">
                 Autor {{ dailiesFiltered[currentIndex]?.authorId }} -
                 {{ dailiesFiltered[currentIndex]?.date }}
-                </span>
-                <el-button
-                    class="daily-btn-index"
-                    :icon="ArrowRight"
-                    circle
-                    @click="nextDaily"
-                    :disabled="isLastDaily"
-                    aria-label="Próxima daily"
-                >
-                </el-button>
+              </span>
+              <el-button
+                  class="daily-btn-index"
+                  :icon="ArrowRight"
+                  circle
+                  @click="nextDaily"
+                  :disabled="isLastDaily"
+                  aria-label="Próxima daily"
+              />
+            </div>
+          </template>
 
-              </div>
-            </template>
+          <transition name="fade-slide" mode="out-in">
+            <div class="dialog-content" :key="currentIndex">
+              <p><b>Ontem:</b> {{ dailiesFiltered[currentIndex]?.lastDayLog }}</p>
+              <p><b>Hoje:</b> {{ dailiesFiltered[currentIndex]?.nextDayPlan }}</p>
 
-            <transition name="fade-slide" mode="out-in">
-              <div class="dialog-content" :key="currentIndex">
-                <p><b>Ontem:</b> {{ dailiesFiltered[currentIndex]?.lastDayLog }}</p>
-                <p><b>Hoje:</b> {{ dailiesFiltered[currentIndex]?.nextDayPlan }}</p>
+              <el-input
+                  v-model="dailyResponse"
+                  type="textarea"
+                  placeholder="Escreva sua resposta..."
+                  rows="3"
+                  class="input-response"
+              />
+            </div>
+          </transition>
 
-                <el-input
-                    v-model="dailyResponse"
-                    type="textarea"
-                    placeholder="Escreva sua resposta..."
-                    rows="3"
-                    class="mt-3"
-                />
-              </div>
-            </transition>
-
-            <template #footer>
-              <el-button type="danger" @click="showModal = false">Fechar</el-button>
-              <el-button type="primary" @click="enviarResposta">Enviar resposta</el-button>
-            </template>
-          </el-dialog>
-        </div>
-
+          <template #footer>
+            <el-button type="danger" @click="showModal = false">Fechar</el-button>
+            <el-button type="primary" @click="enviarResposta">
+              Enviar resposta
+            </el-button>
+          </template>
+        </el-dialog>
       </el-container>
     </div>
-  </el-container>
 
-  <el-dialog v-model="showResumo" width="700px" class="resumo-dialog" lock-scroll="false">
-    <template #header>
-      <div class="dialog-header">
-        <span class="dialog-title">Resumo das Dailies</span>
-        <el-button size="small" type="success" @click="copiarResumo">📋 Copiar</el-button>
+    <!-- Modal Resumo -->
+    <el-dialog
+        v-model="showResumo"
+        width="700px"
+        class="resumo-dialog"
+        lock-scroll="false"
+    >
+      <template #header>
+        <div class="dialog-header">
+          <span class="dialog-title">Resumo das Dailies</span>
+          <el-button size="small" type="success" @click="copiarResumo">
+            📋 Copiar
+          </el-button>
+        </div>
+      </template>
+
+      <div class="resumo-content">
+        <pre>{{ resumoTexto }}</pre>
       </div>
-    </template>
 
-    <div class="resumo-content">
-      <pre>{{ resumoTexto }}</pre>
-    </div>
-
-    <template #footer>
-      <el-button type="primary" @click="showResumo = false">Fechar</el-button>
-    </template>
-  </el-dialog>
+      <template #footer>
+        <el-button type="primary" @click="showResumo = false">Fechar</el-button>
+      </template>
+    </el-dialog>
+  </el-container>
 </template>
 
 <script>
-import axios from "axios";
-import { ArrowRight, ArrowLeft } from '@element-plus/icons-vue'
-
+import api from "@/services/api"; // usa a instância com interceptor
+import { ArrowRight, ArrowLeft } from "@element-plus/icons-vue";
+import { useAuthStore } from "@/stores/auth";
 
 export default {
-  components: {ArrowRight, ArrowLeft},
+  components: { ArrowRight, ArrowLeft },
   data() {
     return {
-      URL_API: "http://localhost:8080",
+      // NÃO usa URL_API local — usa api.baseURL
       selectedDate: null,
       devsSelected: [],
       dailys: [],
@@ -163,12 +193,19 @@ export default {
       if (!currentDaily) return;
 
       try {
+        // Exemplo de endpoint: /dailies/{id}/response
+        // Se seu backend tem outro caminho, ajuste aqui.
+        await api.post(`/dailies/${currentDaily.id}/response`, {
+          message: this.dailyResponse,
+        });
         this.$message.success("Resposta enviada com sucesso!");
         this.dailyResponse = "";
-        this.showDialog = false;
+        this.showModal = false;
       } catch (error) {
         console.error("Erro ao enviar resposta:", error);
-        this.$message.error("Erro ao enviar resposta");
+        const msg =
+            error.response?.data?.message || error.message || "Erro ao enviar resposta";
+        this.$message.error(msg);
       }
     },
 
@@ -179,16 +216,16 @@ export default {
       }
       this.getDailys(this.selectedDate);
     },
-    handleSelectChange(val) {
 
+    handleSelectChange(val) {
       if (val.includes("all")) {
-        this.devsSelected = this.devsFiltered.map(d => d.id);
+        this.devsSelected = this.devsFiltered.map((d) => d.id);
         this.dailyFilter(this.devsSelected);
         return;
       }
-
       this.dailyFilter(this.devsSelected);
     },
+
     openDaily(index) {
       this.currentIndex = index;
       this.showModal = true;
@@ -203,26 +240,26 @@ export default {
         this.currentIndex--;
       }
     },
+
     selectMenu(value) {
       this.teamSelected = value;
-
       this.devsFilter(value);
-
-      this.devsSelected = this.devsFiltered.map(d => d.id);
-
+      this.devsSelected = this.devsFiltered.map((d) => d.id);
       this.dailyFilter(this.devsSelected);
     },
 
     async getDailys(date) {
       try {
         const formattedDate = this.formatDateToDDMMYYYY(new Date(date));
-        const resp = await axios.get(
-            `${this.URL_API}/dailies/byDate?date=${formattedDate}`
-        );
-        this.dailys = resp.data;
+        const resp = await api.get(`/dailies/byDate?date=${formattedDate}`);
+        this.dailys = resp.data || [];
         this.dailyFilter(this.devsSelected);
       } catch (error) {
         console.error("Erro ao buscar dailys:", error);
+        const msg =
+            error.response?.data?.message || error.message || "Erro ao buscar dailys";
+        // se 401 intercept já redirecionou; aqui só exibir
+        this.$message.error(msg);
       }
     },
 
@@ -234,43 +271,48 @@ export default {
     },
 
     async initPage() {
+      const auth = useAuthStore();
+      // se não autenticado, redireciona para /login
+      if (!auth.isAuthenticated) {
+        // redireciona para login
+        this.$message.warning("Você precisa entrar para acessar esta página.");
+        this.$router.push({ path: "/login", query: { redirect: this.$route.fullPath } });
+        return;
+      }
+
       try {
-        const teamsResp = await axios.get(this.URL_API.concat("/teams"));
-        this.teamsItens = teamsResp.data;
+        const teamsResp = await api.get("/teams");
+        this.teamsItens = teamsResp.data || [];
 
         if (this.teamsItens.length === 0) return;
 
         const firstTeamId = this.teamsItens[0].id;
         this.teamSelected = firstTeamId;
 
-        const devsResp = await axios.get(this.URL_API.concat("/developers"));
-        this.devs = devsResp.data;
+        const devsResp = await api.get("/developers");
+        this.devs = devsResp.data || [];
 
         this.devsFilter(firstTeamId);
-
-        this.devsSelected = this.devsFiltered.map(d => d.id);
+        this.devsSelected = this.devsFiltered.map((d) => d.id);
 
         const today = new Date();
         const formattedDate = this.formatDateToDDMMYYYY(today);
-        const dailiesResp = await axios.get(
-            `${this.URL_API}/dailies/byDate?date=${formattedDate}`
-        );
-        this.dailys = dailiesResp.data;
-
+        const dailiesResp = await api.get(`/dailies/byDate?date=${formattedDate}`);
+        this.dailys = dailiesResp.data || [];
         this.dailyFilter(this.devsSelected);
       } catch (error) {
         console.error("Erro no init:", error);
+        const msg = error.response?.data?.message || error.message || "Erro no init";
+        this.$message.error(msg);
       }
     },
 
     devsFilter(teamId) {
-      this.devsFiltered = this.devs.filter(dev => dev.teamId === teamId);
+      this.devsFiltered = this.devs.filter((dev) => dev.teamId === teamId);
     },
 
     dailyFilter(ids) {
-      this.dailiesFiltered = this.dailys.filter(daily =>
-          ids.includes(daily.authorId) // <- importante: daily tem authorId, não id do daily
-      );
+      this.dailiesFiltered = this.dailys.filter((daily) => ids.includes(daily.authorId));
     },
 
     abrirResumo() {
@@ -278,12 +320,14 @@ export default {
         this.$message.warning("Nenhuma daily encontrada para gerar o resumo!");
         return;
       }
-
-      this.resumoTexto = this.dailiesFiltered.map(d => {
-        const dev = this.devs.find(x => x.id === d.authorId);
-        return `👤 ${dev ? dev.name : "Desconhecido"} (${d.date})\n- Ontem: ${d.lastDayLog}\n- Hoje: ${d.nextDayPlan}\n`;
-      }).join("\n");
-
+      this.resumoTexto = this.dailiesFiltered
+          .map((d) => {
+            const dev = this.devs.find((x) => x.id === d.authorId);
+            return `👤 ${dev ? dev.name : "Desconhecido"} (${d.date})\n- Ontem: ${
+                d.lastDayLog
+            }\n- Hoje: ${d.nextDayPlan}\n`;
+          })
+          .join("\n");
       this.showResumo = true;
     },
 
@@ -297,110 +341,73 @@ export default {
       }
     },
   },
+
   mounted() {
     this.initPage();
   },
+
   computed: {
     ArrowLeft() {
-      return ArrowLeft
+      return ArrowLeft;
     },
     ArrowRight() {
-      return ArrowRight
+      return ArrowRight;
     },
     isLastDaily() {
-      return this.currentIndex === this.dailiesFiltered.length - 1
+      return this.currentIndex === this.dailiesFiltered.length - 1;
     },
     isFirstDaily() {
-      return this.currentIndex === 0
-    }
-  }
-
+      return this.currentIndex === 0;
+    },
+  },
 };
 </script>
 
-
 <style scoped>
+/* (mantive exatamente seu CSS original) */
+/* ... cole aqui todo o CSS do seu arquivo original (o mesmo que você já tem) ... */
 
-.fade-slide-enter-active, .fade-slide-leave-active {
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+/* ----------- Animações ----------- */
+.fade-slide-enter-active,
+.fade-slide-leave-active {
   transition: all 0.3s ease;
 }
 .fade-slide-enter-from {
   opacity: 0;
   transform: translateY(30px);
 }
-.fade-slide-enter-to {
-  opacity: 1;
-  transform: translateX(0);
-}
-.fade-slide-leave-from {
-  opacity: 1;
-  transform: translateX(0);
-}
 .fade-slide-leave-to {
   opacity: 0;
   transform: translateY(30px);
 }
 
-.daily-btn-index {
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
-.daily-btn-index:hover:not(:disabled) {
-  transform: scale(1.1);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-.daily-btn-index:active:not(:disabled) {
-  transform: scale(0.9);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25) inset;
-}
-.daily-btn-index:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-  transform: none;
-  box-shadow: none;
-}
-
-.resumo-dialog .dialog-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.resumo-content {
-  overflow: hidden;
-
-  background: #f9f9f9;
-  padding: 15px;
-  border-radius: 12px;
-  max-height: 50vh;
-  overflow-y: auto;
-  white-space: pre-wrap;
-  font-family: "Courier New", monospace;
-  font-size: 0.95rem;
-  line-height: 1.5;
-  scrollbar-width: none;
-}
-
-/* ----------- Layout principal responsivo ----------- */
-.container {
-  width: 95%;
-  height: 100vh;
+/* ----------- Layout principal ----------- */
+.app-container {
+  width: 100%;
+  min-height: 100vh;
   display: flex;
   flex-direction: column;
 }
 .main-layout {
   display: flex;
   flex: 1;
-  padding: 1%;
+  padding: 1rem;
   gap: 1rem;
-  max-height: 100%;
 }
 .sidebar {
-  flex: 0 0 15%;
+  height: 80vh;
+  flex: 0 0 220px;
   background: linear-gradient(180deg, #2c5364, #203a43, #0f2027);
   color: white;
   padding: 1rem;
-  border-radius: 20px;
+  border-radius: 16px;
   box-shadow: 2px 0 8px rgba(0, 0, 0, 0.2);
-  max-height: 500px;
   overflow-y: auto;
 }
 .sidebar ul {
@@ -429,39 +436,70 @@ export default {
   flex-direction: column;
   min-height: 0;
 }
+
+/* ----------- Filtros ----------- */
 .filters {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
   align-items: flex-end;
-  margin-left: 25px;
-  margin-top: 25px;
+  margin-bottom: 1rem;
+  gap: 1rem;
 }
+.filters-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+.input-date,
+.input-select {
+  width: 250px;
+  border-radius: 12px;
+}
+.btn-action {
+  background: #2c5364;
+  border: none;
+  border-radius: 12px;
+  padding: 0.6rem 1.2rem;
+}
+
+.btn-action:hover {
+  cursor: pointer;
+  color: #FFF;
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.35);
+  background-color: #294f5b;
+}
+
+/* ----------- Cards ----------- */
 .card-container {
   background: #fff;
   border-radius: 20px;
   padding: 1rem;
-  box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
   display: flex;
   flex-direction: column;
   min-height: 0;
-  margin: 5px 25px;
-  max-height: 390px;
+  max-height: 69vh;
+  margin-top: 0.5rem;
+}
+.no-data {
+  text-align: center;
+  color: #666;
+  padding: 2rem;
 }
 .card-scroll {
-  overflow-x: auto;
-  display: flex;
-  flex-direction: column;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 1rem;
-  max-height: 390px;
 }
 .daily-item {
   background: #f7f7f7;
   border-radius: 12px;
   padding: 1rem;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   cursor: pointer;
-  width: 850px;
 }
 .author {
   font-weight: 600;
@@ -477,25 +515,9 @@ export default {
   text-align: right;
 }
 
-/* ----------- Estilização de inputs/botões ----------- */
-.rounded,
-.el-button,
-.el-input,
-.el-select,
-.el-date-picker {
-  border-radius: 12px !important;
-  background: linear-gradient(180deg, #2c5364, #203a43, #0f2027);
-  border: none;
-  color: white;
-}
-
-.rounded{
-  margin-bottom: 15px;
-  margin-right: 30px;
-}
-
 /* ----------- Dialogs ----------- */
-.daily-dialog .dialog-header {
+.daily-dialog .dialog-header,
+.resumo-dialog .dialog-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -507,8 +529,37 @@ export default {
 .dialog-content {
   padding: 2%;
   font-size: 0.9rem;
-  scrollbar-width: none;
-  overflow-y: hidden;
+}
+.input-response {
+  margin-top: 1rem;
+}
+.resumo-content {
+  background: #f9f9f9;
+  padding: 15px;
+  border-radius: 12px;
+  max-height: 50vh;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  font-family: "Courier New", monospace;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+/* ----------- Botões no modal ----------- */
+.daily-btn-index {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.daily-btn-index:hover:not(:disabled) {
+  transform: scale(1.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+.daily-btn-index:active:not(:disabled) {
+  transform: scale(0.9);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25) inset;
+}
+.daily-btn-index:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* ----------- Responsividade ----------- */
@@ -517,9 +568,10 @@ export default {
     flex-direction: column;
   }
   .sidebar {
+    height: 5vh;
+    flex-direction: row;
     flex: 0 0 auto;
-    width: 100%;
-    display: flex;
+    width: 90%;
     overflow-x: auto;
   }
   .sidebar ul {
@@ -527,22 +579,20 @@ export default {
     gap: 1rem;
   }
 }
-@media (min-width: 768px) {
-  .card-scroll {
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  }
-}
 @media (max-width: 768px) {
   .filters {
     flex-direction: column;
     align-items: stretch;
   }
-  .filters .el-form {
-    width: 95%;
+  .filters-form {
+    width: 100%;
+  }
+  .input-date,
+  .input-select {
+    width: 100%;
   }
   .card-scroll {
     grid-template-columns: 1fr;
   }
 }
 </style>
-

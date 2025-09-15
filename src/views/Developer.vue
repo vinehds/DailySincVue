@@ -37,8 +37,13 @@
     >
       <el-table-column prop="id" label="ID" width="60" />
       <el-table-column prop="name" label="Nome" min-width="180" />
+      <el-table-column prop="email" label="Email" min-width="180" />
       <el-table-column prop="department" label="Departamento" min-width="140" />
-      <el-table-column prop="responsability" label="Nível de Acesso" min-width="140" />
+      <el-table-column
+          prop="userRole"
+          label="Nível de Acesso"
+          min-width="140"
+      />
 
       <!-- Exibe o nome do time -->
       <el-table-column label="Time" min-width="160">
@@ -53,12 +58,14 @@
               size="small"
               type="primary"
               @click="openEditModal(scope.row)"
-          >Editar</el-button>
+          >Editar</el-button
+          >
           <el-button
               size="small"
               type="danger"
               @click="deleteDeveloper(scope.row.id)"
-          >Excluir</el-button>
+          >Excluir</el-button
+          >
         </template>
       </el-table-column>
     </el-table>
@@ -91,6 +98,10 @@
           <el-input v-model="editForm.name" />
         </el-form-item>
 
+        <el-form-item label="Email">
+          <el-input v-model="editForm.email" />
+        </el-form-item>
+
         <el-form-item label="Departamento">
           <el-select v-model="editForm.department" placeholder="Selecione">
             <el-option label="WEB_DEVELOPER" value="WEB_DEVELOPER" />
@@ -100,7 +111,7 @@
         </el-form-item>
 
         <el-form-item label="Responsabilidade">
-          <el-select v-model="editForm.responsability" placeholder="Selecione">
+          <el-select v-model="editForm.userRole" placeholder="Selecione">
             <el-option label="MEMBER" value="MEMBER" />
             <el-option label="TECHLEAD" value="TECHLEAD" />
             <el-option label="ADMIN" value="ADMIN" />
@@ -122,9 +133,14 @@
 
       <template #footer>
         <el-button @click="editDialogVisible = false">Cancelar</el-button>
-        <el-button v-if="!isAdding" type="danger" @click="deleteDeveloper(editForm.id)">Excluir</el-button>
+        <el-button
+            v-if="!isAdding"
+            type="danger"
+            @click="deleteDeveloper(editForm.id)"
+        >Excluir</el-button
+        >
         <el-button type="primary" @click="saveEdit">
-          {{ isAdding ? 'Adicionar' : 'Salvar' }}
+          {{ isAdding ? "Adicionar" : "Salvar" }}
         </el-button>
       </template>
     </el-dialog>
@@ -132,12 +148,11 @@
 </template>
 
 <script>
-import axios from "axios";
+import api from "@/services/api"; // usa a instância já configurada com interceptors
 
 export default {
   data() {
     return {
-      URL_API: "http://localhost:8080",
       developers: [],
       teams: [],
       editDialogVisible: false,
@@ -145,85 +160,109 @@ export default {
       editForm: {
         id: null,
         name: "",
+        email: "",
         teamId: null,
         department: "",
-        responsability: ""
+        userRole: "",
       },
       // paginação
       currentPage: 1,
       pageSize: 5,
       tableHeight: 300,
-      selectedTeamId: null
+      selectedTeamId: null,
     };
   },
   computed: {
     filteredDevelopers() {
       if (!this.selectedTeamId) return this.developers;
-      return this.developers.filter(dev => dev.teamId === this.selectedTeamId);
+      return this.developers.filter((dev) => dev.teamId === this.selectedTeamId);
     },
     paginatedDevelopers() {
       const start = (this.currentPage - 1) * this.pageSize;
       return this.filteredDevelopers.slice(start, start + this.pageSize);
-    }
+    },
   },
   methods: {
     async getDevelopers() {
       try {
-        const response = await axios.get(`${this.URL_API}/developers`);
+        const response = await api.get("/developers");
         this.developers = response.data || [];
       } catch (error) {
         console.error("Erro ao buscar desenvolvedores:", error);
+        const msg =
+            error.response?.data?.message ||
+            error.message ||
+            "Erro ao buscar desenvolvedores";
+        this.$message.error(msg);
         this.developers = [];
       }
     },
 
     async getTeams() {
       try {
-        const response = await axios.get(`${this.URL_API}/teams`);
+        const response = await api.get("/teams");
         this.teams = response.data || [];
       } catch (error) {
         console.error("Erro ao buscar times:", error);
+        const msg =
+            error.response?.data?.message || error.message || "Erro ao buscar times";
+        this.$message.error(msg);
         this.teams = [];
       }
     },
 
     getTeamName(teamId) {
-      const team = this.teams.find(t => t.id === teamId);
+      const team = this.teams.find((t) => t.id === teamId);
       return team ? team.teamName : "Sem time";
     },
 
     async saveEdit() {
       try {
         if (this.isAdding) {
-          await axios.post(`${this.URL_API}/developers`, this.editForm);
+          await api.post("/developers", this.editForm);
           this.$message.success("Desenvolvedor adicionado com sucesso!");
         } else {
-          await axios.put(`${this.URL_API}/developers/${this.editForm.id}`, this.editForm);
+          await api.put(`/developers/${this.editForm.id}`, this.editForm);
           this.$message.success("Desenvolvedor atualizado com sucesso!");
         }
         this.editDialogVisible = false;
         await this.getDevelopers();
       } catch (error) {
         console.error("Erro ao salvar:", error);
-        this.$message.error("Erro ao salvar desenvolvedor");
+        const msg =
+            error.response?.data?.message || error.message || "Erro ao salvar";
+        this.$message.error(msg);
       }
     },
 
     async deleteDeveloper(id) {
-      try {
-        await axios.delete(`${this.URL_API}/developers/${id}`);
-        this.$message.success("Desenvolvedor deletado com sucesso!");
-        await this.getDevelopers();
-        this.editDialogVisible = false;
-      } catch (error) {
-        console.error("Erro ao deletar desenvolvedor:", error);
-        this.$message.error("Erro ao deletar");
-      }
+      this.$confirm("Deseja realmente excluir esse cadastro?").then(
+          async () => {
+            try {
+              await api.delete(`/developers/${id}`);
+              this.$message.success("Desenvolvedor deletado com sucesso!");
+              await this.getDevelopers();
+              this.editDialogVisible = false;
+            } catch (error) {
+              console.error("Erro ao deletar desenvolvedor:", error);
+              const msg =
+                  error.response?.data?.message || error.message || "Erro ao deletar";
+              this.$message.error(msg);
+            }
+          }
+      );
     },
 
     openAddModal() {
       this.isAdding = true;
-      this.editForm = { id: null, name: "", teamId: null, department: "", responsability: "" };
+      this.editForm = {
+        id: null,
+        name: "",
+        email: "",
+        teamId: null,
+        department: "",
+        userRole: "",
+      };
       this.editDialogVisible = true;
     },
 
@@ -252,12 +291,12 @@ export default {
   },
   beforeUnmount() {
     window.removeEventListener("resize", this.adjustTableForScreen);
-  }
+  },
 };
 </script>
 
 <style scoped>
-body{
+body {
   margin: 0;
   padding: 0;
   height: 100vh;
@@ -330,13 +369,12 @@ body{
 }
 
 :deep(.el-pagination.is-background .el-pager li.is-active) {
-  background-color: #294f5b  !important;
+  background-color: #294f5b !important;
   color: #fff !important;
-  border-color: #294f5b  !important;
+  border-color: #294f5b !important;
 }
 
-.btnAdd{
+.btnAdd {
   margin-bottom: -25px;
 }
-
 </style>

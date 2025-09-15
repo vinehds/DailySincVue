@@ -27,8 +27,8 @@ body{
 }
 
 .content-container {
-  margin-top: 5%;
-  height: 100vh;
+  margin-top: 10%;
+  height: 90vh;
   display: flex;
   justify-content: center;
   align-items: center;

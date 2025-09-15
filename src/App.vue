@@ -14,10 +14,12 @@
 
 <script>
 import TopBar from "@/components/TopBar.vue";
-import ListagemTimes from "@/components/ListagemTimes.vue";
+import Team from "@/views/Team.vue";
 
 export default {
-  components: { TopBar, ListagemTimes },
+  components: { TopBar, ListagemTimes: Team },
+
+
 };
 </script>
 

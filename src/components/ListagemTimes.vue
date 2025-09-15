@@ -2,7 +2,7 @@
   <section class="carousel-section">
 
     <el-carousel v-if="teams.length > 0" height="300px" type="card" interval="0" indicator-position="outside"
-        arrow="always" class="carousel">
+                 arrow="always" class="carousel">
       <el-carousel-item
           v-for="(team, index) in teams"
           :key="index"
@@ -62,7 +62,8 @@
 
       <template #footer>
         <el-button @click="editDialogVisible = false">Cancelar</el-button>
-        <el-button @click="deleteTeam(editForm.id)" color="red" v-if="!isAdding">Deletar</el-button>
+        <el-button @click="deleteTeam(editForm.id)" color="red" v-if="!isAdding"
+                   :disabled="editForm.membersId.length > 0" >Deletar</el-button>
         <el-button type="primary" @click="saveEdit">
           {{ isAdding ? 'Adicionar' : 'Salvar' }}
         </el-button>
@@ -73,13 +74,11 @@
 </template>
 
 <script>
-import axios from "axios";
+import api from "@/services/api"; // instância com interceptor de token
 
 export default {
-
   data() {
     return {
-      URL_API: "http://localhost:8080",
       teams: [],
       allMembers: [],
       editDialogVisible: false,
@@ -100,32 +99,37 @@ export default {
 
     async deleteTeam(teamID) {
       try {
-        const response = await axios.delete(this.URL_API.concat(`/teams/${teamID}`));
+        await api.delete(`/teams/${teamID}`);
         this.editDialogVisible = false;
         await this.getTeams();
-        this.$message("Time deletado com sucesso!");
-      }  catch (error) {
-        this.$message.error("Erro ao deletar equipe")
+        this.$message.success("Time deletado com sucesso!");
+      } catch (error) {
         console.error("Erro ao deletar Equipe:", error);
+        const msg = error.response?.data?.message || error.message || "Erro ao deletar equipe";
+        this.$message.error(msg);
       }
     },
 
     async getTeams() {
       try {
-        const response = await axios.get(`${this.URL_API}/teams`);
+        const response = await api.get("/teams");
         this.teams = response.data || [];
       } catch (error) {
         console.error("Erro ao buscar equipes:", error);
+        const msg = error.response?.data?.message || error.message || "Erro ao buscar equipes";
+        this.$message.error(msg);
         this.teams = [];
       }
     },
 
     async getMembers() {
       try {
-        const response = await axios.get(`${this.URL_API}/developers`);
+        const response = await api.get("/developers");
         this.allMembers = response.data || [];
       } catch (error) {
         console.error("Erro ao buscar membros:", error);
+        const msg = error.response?.data?.message || error.message || "Erro ao buscar membros";
+        this.$message.error(msg);
       }
     },
 
@@ -144,17 +148,18 @@ export default {
     async saveEdit() {
       try {
         if (this.isAdding) {
-          await axios.post(`${this.URL_API}/teams`, this.editForm);
+          await api.post("/teams", this.editForm);
           this.$message.success("Time adicionado com sucesso!");
         } else {
-          await axios.put(`${this.URL_API}/teams/${this.editForm.id}`, this.editForm);
+          await api.put(`/teams/${this.editForm.id}`, this.editForm);
           this.$message.success("Time atualizado com sucesso!");
         }
         this.editDialogVisible = false;
         await this.getTeams();
       } catch (error) {
         console.error("Erro ao salvar:", error);
-        this.$message.error("Erro ao salvar time");
+        const msg = error.response?.data?.message || error.message || "Erro ao salvar time";
+        this.$message.error(msg);
       }
     }
   },
@@ -165,9 +170,7 @@ export default {
 };
 </script>
 
-
 <style scoped>
-
 .member-actions el-button {
   margin-left: 5px;
 }
@@ -193,7 +196,7 @@ export default {
 .add-team-button:hover {
   cursor: pointer;
   color: #FFF;
-  transform: translateY(-3px);
+  transform: translateY(-2px);
   box-shadow: 0 10px 20px rgba(0,0,0,0.35);
   background-color: #294f5b;
 }
@@ -259,14 +262,12 @@ export default {
   margin-top: 12px;
 }
 
-
 .menu {
   border-bottom: none !important;
   display: flex;
   justify-content: center;
   font-size: 15px;
   font-weight: 500;
-
   background: linear-gradient(90deg, #0f2027, #203a43, #2c5364);
   border-radius: 18px;
   padding: 6px 16px;
@@ -287,7 +288,6 @@ export default {
   color: #00e0ff !important;
 }
 
-
 .carousel-section >>> .el-carousel__mask {
   background-color: transparent;
 }
@@ -297,11 +297,6 @@ export default {
   display: flex;
   justify-content: center;
   align-items: center;
-}
-
-.carousel ::v-deep(.el-carousel__item) {
-  background: transparent !important;
-  box-shadow: none !important;
 }
 
 .carousel ::v-deep(.el-carousel__card) {
