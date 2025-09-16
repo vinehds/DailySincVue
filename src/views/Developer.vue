@@ -12,6 +12,7 @@
           clearable
           class="team-filter"
       >
+        <el-option label="Sem time" value="no-team" />
         <el-option
             v-for="team in teams"
             :key="team.id"
@@ -33,7 +34,6 @@
         border
         stripe
         class="dev-table"
-        :height="tableHeight"
     >
       <el-table-column prop="id" label="ID" width="60" />
       <el-table-column prop="name" label="Nome" min-width="180" />
@@ -174,9 +174,15 @@ export default {
   },
   computed: {
     filteredDevelopers() {
-      if (!this.selectedTeamId) return this.developers;
-      return this.developers.filter((dev) => dev.teamId === this.selectedTeamId);
-    },
+      if (this.selectedTeamId === null) {
+        return this.developers;
+      } else if (this.selectedTeamId === "no-team") {
+        return this.developers.filter((dev) => !dev.teamId);
+      } else {
+        return this.developers.filter((dev) => dev.teamId === this.selectedTeamId);
+      }
+    }
+    ,
     paginatedDevelopers() {
       const start = (this.currentPage - 1) * this.pageSize;
       return this.filteredDevelopers.slice(start, start + this.pageSize);
