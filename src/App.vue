@@ -1,9 +1,8 @@
 <template xmlns="http://www.w3.org/1999/html">
   <div class="geral">
     <el-container style="flex-direction: column; height: 100%">
-      <topBar class="topbar" />
+      <topBar class="topbar" v-if="isLoggedIn" />
       <el-main class="main-content">
-        <!-- aqui entra a transição -->
         <transition name="fade" mode="out-in">
           <router-view />
         </transition>
@@ -15,10 +14,16 @@
 <script>
 import TopBar from "@/components/TopBar.vue";
 import Team from "@/views/Team.vue";
+import {useAuthStore} from "@/stores/auth.js";
 
 export default {
   components: { TopBar, ListagemTimes: Team },
-
+  computed: {
+    isLoggedIn() {
+      const auth = useAuthStore();
+      return auth.isAuthenticated;
+    }
+  }
 
 };
 </script>
