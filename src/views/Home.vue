@@ -401,7 +401,7 @@ html, body {
   gap: 1rem;
 }
 .sidebar {
-  height: 80vh;
+  height: 75vh;
   flex: 0 0 220px;
   background: linear-gradient(180deg, #2c5364, #203a43, #0f2027);
   color: white;
@@ -480,7 +480,7 @@ html, body {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  max-height: 69vh;
+  max-height: 64vh;
   margin-top: 0.5rem;
 }
 .no-data {
