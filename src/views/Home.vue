@@ -457,6 +457,7 @@ html, body {
   border-radius: 12px;
 }
 .btn-action {
+  margin-bottom: 15px;
   background: #2c5364;
   border: none;
   border-radius: 12px;

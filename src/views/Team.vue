@@ -27,7 +27,7 @@ body{
 }
 
 .content-container {
-  margin-top: 10%;
+  margin-top: 8%;
   height: 90vh;
   display: flex;
   justify-content: center;

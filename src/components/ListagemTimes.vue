@@ -24,7 +24,7 @@
           class="add-team-button"
           @click="openAddModal"
       >
-        + Adicionar Time
+        Adicionar Time
       </el-button>
     </div>
 
@@ -171,6 +171,7 @@ export default {
 </script>
 
 <style scoped>
+
 .member-actions el-button {
   margin-left: 5px;
 }

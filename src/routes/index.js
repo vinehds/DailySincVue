@@ -9,6 +9,7 @@ import Login from "../components/Login.vue";
 import Register from "../components/Register.vue";
 import Dashboard from "../components/Dashboard.vue";
 import { useAuthStore } from "../stores/auth";
+import Daily from "@/views/Daily.vue";
 
 /**
  * Défina meta.roles quando a rota requerer autorização por papel
@@ -19,6 +20,7 @@ const routes = [
     { path: "/register", component: Register, meta: { public: true } },
     { path: '/home', name: 'Home', component: Home,  meta: { requiresAuth: true }, },
     { path: '/team', name: 'Team', component: Team,  meta: { requiresAuth: true }, },
+    { path: '/daily', name: 'Daily', component: Daily,  meta: { requiresAuth: true }, },
     { path: '/dev', name: 'Developer', component: Developer,  meta: { requiresAuth: true }, },
     {
         path: "/dashboard",

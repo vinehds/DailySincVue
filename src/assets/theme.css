@@ -85,7 +85,6 @@ body {
     border-radius: var(--radius-md);
     border: 1px solid rgba(0,0,0,0.08);
     background: #fff;
-    font-size: var(--fs-base);
     outline: none;
     transition: box-shadow .12s ease, border-color .12s ease;
 }

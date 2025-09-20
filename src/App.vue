@@ -18,6 +18,9 @@ import {useAuthStore} from "@/stores/auth.js";
 
 export default {
   components: { TopBar, ListagemTimes: Team },
+  mounted(){
+    console.log(this.isLoggedIn);
+  },
   computed: {
     isLoggedIn() {
       const auth = useAuthStore();
@@ -49,11 +52,12 @@ body,
 }
 
 body {
-  background: #313131;
+  background-color: #313131;
   font-family: "Poppins", sans-serif;
   font-size: 14px;
-  color: #333;
+  color: #fff;
 }
+
 
 .el-container {
   height: 100%;
@@ -66,7 +70,6 @@ body {
   margin-top: 60px; /* espaço da topbar fixa */
 }
 
-/* 🔥 animação fade-in/fade-out */
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.4s ease, transform 0.4s ease;
